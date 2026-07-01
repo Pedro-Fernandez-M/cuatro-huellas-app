@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sans);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ─────────────────────────────────────────────────────────
+   Tema cálido "Cuatro Huellas" — fondo crema, acento terracota
+───────────────────────────────────────────────────────── */
+:root {
+  --background:         oklch(0.98 0.01 180);   /* menta muy claro */
+  --card:                oklch(1 0 0);
+  --popover:             oklch(1 0 0);
+  --secondary:           oklch(0.95 0.02 175);
+  --muted:               oklch(0.95 0.02 175);
+  --input:               oklch(0.96 0.015 175);
+  --border:              oklch(0.89 0.02 190);
+
+  --foreground:          oklch(0.28 0.04 245);
+  --card-foreground:     oklch(0.28 0.04 245);
+  --popover-foreground:  oklch(0.28 0.04 245);
+  --secondary-foreground:oklch(0.30 0.04 245);
+  --muted-foreground:    oklch(0.5 0.03 235);
+
+  --primary:             oklch(0.42 0.08 245);   /* azul marino del logo */
+  --primary-foreground:  oklch(0.99 0.005 180);
+  --accent:              oklch(0.82 0.08 165);   /* verde menta */
+  --accent-foreground:   oklch(0.28 0.04 245);
+  --ring:                oklch(0.42 0.08 245);
+
+  --destructive:         oklch(0.6 0.22 25);
+
+  --radius: 1rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  html {
+    @apply font-sans;
+  }
+  p, li {
+    line-height: 1.6;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .gradient-warm {
+    background: linear-gradient(135deg, oklch(0.42 0.08 245), oklch(0.55 0.07 205));
+  }
+  .text-gradient-warm {
+    background: linear-gradient(135deg, oklch(0.42 0.08 245), oklch(0.55 0.08 200));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fade-in 0.35s ease-out; }
+
+:focus-visible {
+  outline: 2px solid oklch(0.42 0.08 245);
+  outline-offset: 2px;
 }
