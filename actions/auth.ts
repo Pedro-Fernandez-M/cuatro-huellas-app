@@ -11,18 +11,27 @@ export async function signIn(formData: FormData) {
     return { success: false, error: 'Email y contraseña son requeridos.' }
   }
 
-  const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  try {
+    const supabase = await createClient()
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
-    return { success: false, error: 'Credenciales incorrectas. Verifica tu email y contraseña.' }
+    if (error) {
+      return { success: false, error: 'Credenciales incorrectas. Verifica tu email y contraseña.' }
+    }
+
+    redirect('/admin/dashboard')
+  } catch {
+    return { success: false, error: 'No se pudo conectar con Supabase. Revisa la configuración del proyecto en Vercel.' }
   }
-
-  redirect('/admin/dashboard')
 }
 
 export async function signOut() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
+  try {
+    const supabase = await createClient()
+    await supabase.auth.signOut()
+  } catch {
+    // Ignorar, la sesión ya no estará disponible si la configuración falla
+  }
+
   redirect('/admin/login')
 }

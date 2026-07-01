@@ -1,8 +1,12 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { getSupabaseConfigError, getSupabaseEnv } from './config'
 
 export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  const { url, anonKey } = getSupabaseEnv()
+
+  if (!url || !anonKey) {
+    throw new Error(getSupabaseConfigError())
+  }
+
+  return createBrowserClient(url, anonKey)
 }
