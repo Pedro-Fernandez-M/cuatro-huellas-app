@@ -1,20 +1,10 @@
 import Link from 'next/link'
-import { CalendarDays, UserPlus, PawPrint, Clock } from 'lucide-react'
+import { CalendarDays, UserPlus, PawPrint } from 'lucide-react'
 import { listAppointmentsForDate, countInShopNow } from '@/actions/appointments'
 import { todayInShopTz, formatDateLong } from '@/lib/date'
-import { serviceLabel } from '@/lib/constants/services'
-import { sizeLabel } from '@/lib/constants/sizes'
-import { Badge } from '@/components/ui/badge'
+import TodayAppointments from '@/components/admin/TodayAppointments'
 
 export const dynamic = 'force-dynamic'
-
-const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'primary' | 'success' | 'warning' }> = {
-  booked: { label: 'Reservado', variant: 'primary' },
-  arrived: { label: 'En el local', variant: 'warning' },
-  completed: { label: 'Completado', variant: 'success' },
-  cancelled: { label: 'Cancelado', variant: 'default' },
-  no_show: { label: 'No llegó', variant: 'default' },
-}
 
 export default async function AdminHomePage() {
   const today = todayInShopTz()
@@ -64,29 +54,7 @@ export default async function AdminHomePage() {
           <p>No hay citas agendadas para hoy.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {appointments.map((a) => {
-            const badge = STATUS_BADGE[a.status]
-            return (
-              <Link
-                key={a.id}
-                href={`/admin/dashboard/checkin/${a.id}`}
-                className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/40 transition-all flex-wrap"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1.5 text-sm font-semibold text-muted-foreground w-16 shrink-0">
-                    <Clock className="size-3.5" /> {a.start_time.slice(0, 5)}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-sm">{a.pet_name} <span className="text-muted-foreground font-normal">· {a.pet_breed}</span></p>
-                    <p className="text-xs text-muted-foreground">{serviceLabel(a.service)} · {sizeLabel(a.size_category)} · {a.owner_name}</p>
-                  </div>
-                </div>
-                <Badge variant={badge.variant}>{badge.label}</Badge>
-              </Link>
-            )
-          })}
-        </div>
+        <TodayAppointments appointments={appointments} />
       )}
     </div>
   )

@@ -65,6 +65,14 @@ export interface BlockedDate {
 }
 
 // Categoría libre: el staff puede crear las que necesite (Shampoo, Accesorios, etc.)
+export interface ManualIncome {
+  id: string
+  amount: number
+  description: string | null
+  income_date: string // YYYY-MM-DD
+  created_at: string
+}
+
 export type InventoryCategory = string
 
 export interface InventoryProduct {

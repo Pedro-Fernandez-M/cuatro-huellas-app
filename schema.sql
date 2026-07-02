@@ -93,6 +93,15 @@ create table inventory_products (
   unique (category, variant)
 );
 
+-- Ingresos manuales (ventas de productos, otros ingresos fuera de una cita)
+create table manual_incomes (
+  id          uuid primary key default gen_random_uuid(),
+  amount      numeric(10, 0) not null check (amount > 0),
+  description text,
+  income_date date not null default current_date,
+  created_at  timestamptz not null default now()
+);
+
 create table inventory_movements (
   id           uuid primary key default gen_random_uuid(),
   product_id   uuid not null references inventory_products(id) on delete cascade,
@@ -114,6 +123,7 @@ alter table appointments        enable row level security;
 alter table blocked_dates       enable row level security;
 alter table inventory_products  enable row level security;
 alter table inventory_movements enable row level security;
+alter table manual_incomes      enable row level security;
 
 create policy "staff_all_clients"      on clients             for all to authenticated using (true) with check (true);
 create policy "staff_all_pets"         on pets                for all to authenticated using (true) with check (true);
@@ -121,6 +131,7 @@ create policy "staff_all_appointments" on appointments        for all to authent
 create policy "staff_all_blocked"      on blocked_dates       for all to authenticated using (true) with check (true);
 create policy "staff_all_products"     on inventory_products  for all to authenticated using (true) with check (true);
 create policy "staff_all_movements"    on inventory_movements for all to authenticated using (true) with check (true);
+create policy "staff_all_manual_incomes" on manual_incomes    for all to authenticated using (true) with check (true);
 
 -- ============================================================
 -- Paso 4: Funciones

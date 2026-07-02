@@ -1,6 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+import type { Appointment, ManualIncome } from '@/types'
 
 export interface IncomeSummary {
   weekTotal: number
@@ -72,4 +74,93 @@ export async function getIncomeSummary(): Promise<IncomeSummary> {
     .slice(-8)
 
   return { weekTotal, weekCount, monthTotal, monthCount, last8Weeks }
+}
+
+// ─── Ingresos por mes: citas completadas + ingresos manuales ───────────
+
+export interface MonthIncome {
+  appointments: Appointment[]
+  manuals: ManualIncome[]
+  total: number
+}
+
+export async function getMonthIncome(month: string): Promise<MonthIncome> {
+  // month: 'YYYY-MM'
+  const from = `${month}-01`
+  const [y, m] = month.split('-').map(Number)
+  const lastDay = new Date(y, m, 0).getDate()
+  const to = `${month}-${String(lastDay).padStart(2, '0')}`
+
+  const supabase = await createClient()
+  const [apptRes, manualRes] = await Promise.all([
+    supabase
+      .from('appointments')
+      .select('*')
+      .eq('status', 'completed')
+      .not('price_charged', 'is', null)
+      .gte('appointment_date', from)
+      .lte('appointment_date', to)
+      .order('appointment_date', { ascending: false })
+      .order('start_time', { ascending: false }),
+    supabase
+      .from('manual_incomes')
+      .select('*')
+      .gte('income_date', from)
+      .lte('income_date', to)
+      .order('income_date', { ascending: false }),
+  ])
+
+  const appointments = (apptRes.data ?? []) as Appointment[]
+  const manuals = (manualRes.data ?? []) as ManualIncome[]
+  const total =
+    appointments.reduce((s, a) => s + (Number(a.price_charged) || 0), 0) +
+    manuals.reduce((s, mi) => s + (Number(mi.amount) || 0), 0)
+
+  return { appointments, manuals, total }
+}
+
+interface ActionResult {
+  success: boolean
+  error?: string
+}
+
+export async function updateAppointmentPrice(id: string, price: number | null): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('appointments')
+    .update({ price_charged: price, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) return { success: false, error: error.message }
+  revalidatePath('/admin/dashboard/ingresos')
+  return { success: true }
+}
+
+export async function addManualIncome(amount: number, date: string, description?: string): Promise<ActionResult> {
+  if (!amount || amount <= 0) return { success: false, error: 'El monto debe ser mayor a 0.' }
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('manual_incomes')
+    .insert({ amount, income_date: date, description: description?.trim() || null })
+  if (error) return { success: false, error: error.message }
+  revalidatePath('/admin/dashboard/ingresos')
+  return { success: true }
+}
+
+export async function updateManualIncome(
+  id: string,
+  fields: { amount?: number; income_date?: string; description?: string | null }
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { error } = await supabase.from('manual_incomes').update(fields).eq('id', id)
+  if (error) return { success: false, error: error.message }
+  revalidatePath('/admin/dashboard/ingresos')
+  return { success: true }
+}
+
+export async function deleteManualIncome(id: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { error } = await supabase.from('manual_incomes').delete().eq('id', id)
+  if (error) return { success: false, error: error.message }
+  revalidatePath('/admin/dashboard/ingresos')
+  return { success: true }
 }
