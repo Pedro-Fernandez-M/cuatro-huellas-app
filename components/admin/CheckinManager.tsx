@@ -7,6 +7,7 @@ import { checkIn, checkOut, updateArrivalDeparture } from '@/actions/appointment
 import { serviceLabel } from '@/lib/constants/services'
 import { sizeLabel } from '@/lib/constants/sizes'
 import { addonLabel, coatConditionLabel } from '@/lib/constants/addons'
+import { estimateTotal } from '@/lib/pricing'
 import { formatDateLong, toDateTimeLocalValue } from '@/lib/date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,10 @@ export default function CheckinManager({ appointment, pet }: { appointment: Appo
   const [appt, setAppt] = useState(appointment)
   const [arrivalValue, setArrivalValue] = useState(toDateTimeLocalValue(appt.arrival_time) || nowLocalInputValue())
   const [departureValue, setDepartureValue] = useState(toDateTimeLocalValue(appt.departure_time) || nowLocalInputValue())
-  const [price, setPrice] = useState(appt.price_charged?.toString() ?? '')
+  const [price, setPrice] = useState(
+    appt.price_charged?.toString() ??
+      estimateTotal({ sizeCategory: appt.size_category, addons: appt.addons, coatCondition: appt.coat_condition }).toString()
+  )
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 

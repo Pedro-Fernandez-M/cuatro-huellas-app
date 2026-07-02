@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
-  Scissors, Droplets, Sparkles, Clock, ChevronRight, ChevronLeft, Check,
+  Scissors, Droplets, Sparkles, Layers, Clock, ChevronRight, ChevronLeft, Check,
   Loader2, User, Phone, Calendar, Dog, PawPrint,
 } from 'lucide-react'
 import MiniCalendar from './MiniCalendar'
@@ -15,9 +15,11 @@ import { Select } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { SERVICES, type ServiceId } from '@/lib/constants/services'
-import { SIZES, isMorningOnly, type SizeCategory } from '@/lib/constants/sizes'
+import { SIZES, isMorningOnly, sizeBasePrice, type SizeCategory } from '@/lib/constants/sizes'
 import { ADDONS, COAT_CONDITIONS, type AddonId, type CoatCondition } from '@/lib/constants/addons'
 import { BREEDS, OTHER_BREED_OPTION } from '@/lib/constants/breeds'
+import { estimateTotal } from '@/lib/pricing'
+import { formatCLP } from '@/lib/date'
 import { getAvailableSlotsAction, getBlockedDatesAction, createBooking } from '@/actions/booking'
 
 type Step = 'service' | 'size' | 'datetime' | 'extras' | 'details' | 'success'
@@ -30,7 +32,7 @@ const STEPS: { key: Step; label: string }[] = [
   { key: 'details', label: 'Datos' },
 ]
 
-const SERVICE_ICONS = { bano_mantencion: Droplets, servicio_completo: Scissors, bano_comercial: Sparkles }
+const SERVICE_ICONS = { bano_mantencion: Droplets, servicio_completo: Scissors, bano_comercial: Sparkles, deslanado: Layers }
 
 const detailsSchema = z.object({
   petName: z.string().min(1, 'Ingresa el nombre de tu mascota'),
@@ -253,8 +255,9 @@ export default function BookingWizard() {
                 <Dog className="size-6 text-primary mx-auto mb-3" />
                 <p className="font-semibold text-sm mb-1">{s.label}</p>
                 <p className="text-xs text-muted-foreground">{s.weightRange}</p>
+                <p className="text-sm font-bold text-primary mt-2">{formatCLP(s.price)}</p>
                 {isMorningOnly(s.id) && (
-                  <p className="text-[10px] text-primary mt-2 font-semibold uppercase tracking-wide">Solo en la mañana</p>
+                  <p className="text-[10px] text-primary mt-1 font-semibold uppercase tracking-wide">Solo en la mañana</p>
                 )}
               </button>
             ))}
@@ -338,9 +341,14 @@ export default function BookingWizard() {
           <p className="text-sm text-muted-foreground mb-6">Puedes dejar esto en blanco si no aplica</p>
 
           <p className="text-sm font-medium mb-3">Servicios adicionales</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
             {ADDONS.map((a) => (
-              <Checkbox key={a.id} label={a.label} checked={addons.includes(a.id)} onChange={() => toggleAddon(a.id)} />
+              <Checkbox
+                key={a.id}
+                label={`${a.label} · ${a.from ? 'desde ' : ''}${formatCLP(a.price)}`}
+                checked={addons.includes(a.id)}
+                onChange={() => toggleAddon(a.id)}
+              />
             ))}
           </div>
 
@@ -349,12 +357,24 @@ export default function BookingWizard() {
             {COAT_CONDITIONS.map((c) => (
               <Checkbox
                 key={c.id}
-                label={c.label}
+                label={c.price > 0 ? `${c.label} · +${formatCLP(c.price)}` : c.label}
                 checked={coatCondition === c.id}
                 onChange={() => setCoatCondition(coatCondition === c.id ? null : c.id)}
               />
             ))}
           </div>
+
+          {size && (
+            <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
+              <span className="text-sm font-medium">Valor estimado</span>
+              <span className="text-lg font-black text-primary">
+                {formatCLP(estimateTotal({ sizeCategory: size, addons, coatCondition }))}
+              </span>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground mb-6 text-center">
+            Valor referencial. El precio final se confirma en el local según el estado de tu mascota.
+          </p>
 
           <div className="flex justify-end">
             <Button onClick={() => setStep('details')}>
@@ -386,6 +406,12 @@ export default function BookingWizard() {
               <Clock className="size-3.5 text-primary" />
               <span>{time}</span>
             </div>
+            {size && (
+              <div className="flex items-center justify-between pt-2 mt-1 border-t border-border">
+                <span className="text-muted-foreground">Valor estimado</span>
+                <span className="font-black text-primary">{formatCLP(estimateTotal({ sizeCategory: size, addons, coatCondition }))}</span>
+              </div>
+            )}
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">

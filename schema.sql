@@ -9,7 +9,7 @@ create extension if not exists pgcrypto;
 
 create type appointment_status as enum ('booked', 'arrived', 'completed', 'cancelled', 'no_show');
 create type appointment_source as enum ('online', 'walk_in', 'manual');
-create type service_type        as enum ('bano_mantencion', 'servicio_completo', 'bano_comercial');
+create type service_type        as enum ('bano_mantencion', 'servicio_completo', 'bano_comercial', 'deslanado');
 create type size_category_type  as enum ('pequena', 'mediana', 'grande', 'extra_grande');
 -- La categoría de inventario es texto libre (el staff crea las que necesite).
 
