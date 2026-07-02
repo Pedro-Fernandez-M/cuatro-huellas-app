@@ -18,11 +18,13 @@ export async function signIn(formData: FormData) {
     if (error) {
       return { success: false, error: 'Credenciales incorrectas. Verifica tu email y contraseña.' }
     }
-
-    redirect('/admin/dashboard')
   } catch {
     return { success: false, error: 'No se pudo conectar con Supabase. Revisa la configuración del proyecto en Vercel.' }
   }
+
+  // redirect() lanza una excepción especial (NEXT_REDIRECT); debe ir FUERA
+  // del try/catch para que no sea atrapada y confundida con un error.
+  redirect('/admin/dashboard')
 }
 
 export async function signOut() {
