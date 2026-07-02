@@ -64,7 +64,12 @@ export async function checkIn(id: string, arrivalTime: string): Promise<ActionRe
   return { success: true }
 }
 
-export async function checkOut(id: string, departureTime: string, priceCharged: number): Promise<ActionResult> {
+export async function checkOut(
+  id: string,
+  departureTime: string,
+  priceCharged: number,
+  paymentMethod?: string | null
+): Promise<ActionResult> {
   const supabase = await createClient()
   const { error } = await supabase
     .from('appointments')
@@ -72,6 +77,7 @@ export async function checkOut(id: string, departureTime: string, priceCharged: 
       status: 'completed',
       departure_time: departureTime,
       price_charged: priceCharged,
+      payment_method: paymentMethod ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
@@ -79,6 +85,7 @@ export async function checkOut(id: string, departureTime: string, priceCharged: 
   if (error) return { success: false, error: error.message }
   revalidatePath('/admin/dashboard')
   revalidatePath('/admin/dashboard/ingresos')
+  revalidatePath('/admin/dashboard/contabilidad')
   return { success: true }
 }
 

@@ -2,17 +2,19 @@
 
 import { useState, useTransition } from 'react'
 import { PawPrint, Dog, Phone, User, Clock, LogIn, LogOut, Loader2, AlertTriangle, Sparkles } from 'lucide-react'
-import type { Appointment, Pet } from '@/types'
+import type { Appointment, Pet, PaymentMethod } from '@/types'
 import { checkIn, checkOut, updateArrivalDeparture } from '@/actions/appointments'
 import { serviceLabel } from '@/lib/constants/services'
 import { sizeLabel } from '@/lib/constants/sizes'
 import { addonLabel, coatConditionLabel } from '@/lib/constants/addons'
+import { PAYMENT_METHODS } from '@/lib/constants/finance'
 import { estimateTotal } from '@/lib/pricing'
 import { formatDateLong, toDateTimeLocalValue } from '@/lib/date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
 import { WhatsAppButton } from '@/components/admin/WhatsAppButton'
 
 const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'primary' | 'success' | 'warning' }> = {
@@ -35,6 +37,7 @@ export default function CheckinManager({ appointment, pet }: { appointment: Appo
     appt.price_charged?.toString() ??
       estimateTotal({ sizeCategory: appt.size_category, addons: appt.addons, coatCondition: appt.coat_condition }).toString()
   )
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(appt.payment_method ?? 'efectivo')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -59,8 +62,8 @@ export default function CheckinManager({ appointment, pet }: { appointment: Appo
     }
     startTransition(async () => {
       const iso = new Date(departureValue).toISOString()
-      const result = await checkOut(appt.id, iso, priceNum)
-      if (result.success) setAppt((a) => ({ ...a, status: 'completed', departure_time: iso, price_charged: priceNum }))
+      const result = await checkOut(appt.id, iso, priceNum, paymentMethod)
+      if (result.success) setAppt((a) => ({ ...a, status: 'completed', departure_time: iso, price_charged: priceNum, payment_method: paymentMethod }))
       else setError(result.error ?? 'Error al registrar salida')
     })
   }
@@ -136,6 +139,10 @@ export default function CheckinManager({ appointment, pet }: { appointment: Appo
         <div className="p-5 rounded-2xl border border-border bg-card">
           <Label>Valor del servicio (CLP)</Label>
           <Input type="number" min="0" placeholder="Ej: 15000" value={price} onChange={(e) => setPrice(e.target.value)} className="mb-4" />
+          <Label>Método de pago</Label>
+          <Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)} className="mb-4">
+            {PAYMENT_METHODS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </Select>
           <Label>Hora de salida</Label>
           <Input type="datetime-local" value={departureValue} onChange={(e) => setDepartureValue(e.target.value)} className="mb-3" />
           {appt.status === 'arrived' ? (

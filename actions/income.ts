@@ -124,36 +124,47 @@ interface ActionResult {
   error?: string
 }
 
-export async function updateAppointmentPrice(id: string, price: number | null): Promise<ActionResult> {
+export async function updateAppointmentPrice(
+  id: string,
+  price: number | null,
+  paymentMethod?: string | null
+): Promise<ActionResult> {
   const supabase = await createClient()
-  const { error } = await supabase
-    .from('appointments')
-    .update({ price_charged: price, updated_at: new Date().toISOString() })
-    .eq('id', id)
+  const fields: Record<string, unknown> = { price_charged: price, updated_at: new Date().toISOString() }
+  if (paymentMethod !== undefined) fields.payment_method = paymentMethod
+  const { error } = await supabase.from('appointments').update(fields).eq('id', id)
   if (error) return { success: false, error: error.message }
   revalidatePath('/admin/dashboard/ingresos')
+  revalidatePath('/admin/dashboard/contabilidad')
   return { success: true }
 }
 
-export async function addManualIncome(amount: number, date: string, description?: string): Promise<ActionResult> {
+export async function addManualIncome(
+  amount: number,
+  date: string,
+  description?: string,
+  paymentMethod?: string | null
+): Promise<ActionResult> {
   if (!amount || amount <= 0) return { success: false, error: 'El monto debe ser mayor a 0.' }
   const supabase = await createClient()
   const { error } = await supabase
     .from('manual_incomes')
-    .insert({ amount, income_date: date, description: description?.trim() || null })
+    .insert({ amount, income_date: date, description: description?.trim() || null, payment_method: paymentMethod ?? null })
   if (error) return { success: false, error: error.message }
   revalidatePath('/admin/dashboard/ingresos')
+  revalidatePath('/admin/dashboard/contabilidad')
   return { success: true }
 }
 
 export async function updateManualIncome(
   id: string,
-  fields: { amount?: number; income_date?: string; description?: string | null }
+  fields: { amount?: number; income_date?: string; description?: string | null; payment_method?: string | null }
 ): Promise<ActionResult> {
   const supabase = await createClient()
   const { error } = await supabase.from('manual_incomes').update(fields).eq('id', id)
   if (error) return { success: false, error: error.message }
   revalidatePath('/admin/dashboard/ingresos')
+  revalidatePath('/admin/dashboard/contabilidad')
   return { success: true }
 }
 

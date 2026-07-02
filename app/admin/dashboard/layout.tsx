@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   LayoutDashboard, CalendarDays, UserPlus,
-  Users, TrendingUp, Package, LogOut, History,
+  Users, TrendingUp, Package, LogOut, History, Calculator,
 } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { signOut } from '@/actions/auth'
@@ -13,6 +13,7 @@ const NAV = [
   { href: '/admin/dashboard/clients', label: 'Clientes', icon: Users },
   { href: '/admin/dashboard/historial', label: 'Historial', icon: History },
   { href: '/admin/dashboard/ingresos', label: 'Ingresos', icon: TrendingUp },
+  { href: '/admin/dashboard/contabilidad', label: 'Contabilidad', icon: Calculator },
   { href: '/admin/dashboard/inventario', label: 'Inventario', icon: Package },
 ]
 

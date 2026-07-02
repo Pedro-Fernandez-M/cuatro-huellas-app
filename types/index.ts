@@ -1,8 +1,9 @@
 import type { ServiceId } from '@/lib/constants/services'
 import type { SizeCategory } from '@/lib/constants/sizes'
 import type { AddonId, CoatCondition } from '@/lib/constants/addons'
+import type { PaymentMethod } from '@/lib/constants/finance'
 
-export type { ServiceId, SizeCategory, AddonId, CoatCondition }
+export type { ServiceId, SizeCategory, AddonId, CoatCondition, PaymentMethod }
 
 export type AppointmentStatus = 'booked' | 'arrived' | 'completed' | 'cancelled' | 'no_show'
 export type AppointmentSource = 'online' | 'walk_in' | 'manual'
@@ -51,6 +52,7 @@ export interface Appointment {
   arrival_time: string | null
   departure_time: string | null
   price_charged: number | null
+  payment_method: PaymentMethod | null
 
   notes: string | null
   created_at: string
@@ -64,12 +66,22 @@ export interface BlockedDate {
   created_at: string
 }
 
-// Categoría libre: el staff puede crear las que necesite (Shampoo, Accesorios, etc.)
 export interface ManualIncome {
   id: string
   amount: number
   description: string | null
   income_date: string // YYYY-MM-DD
+  payment_method: PaymentMethod | null
+  created_at: string
+}
+
+export interface Expense {
+  id: string
+  amount: number
+  category: string
+  description: string | null
+  expense_date: string // YYYY-MM-DD
+  payment_method: PaymentMethod | null
   created_at: string
 }
 

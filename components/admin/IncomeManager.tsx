@@ -9,9 +9,11 @@ import {
   updateManualIncome, deleteManualIncome, type MonthIncome,
 } from '@/actions/income'
 import { serviceLabel } from '@/lib/constants/services'
+import { PAYMENT_METHODS, paymentMethodLabel, type PaymentMethod } from '@/lib/constants/finance'
 import { formatCLP } from '@/lib/date'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
 
 function currentMonth(): string {
   const d = new Date()
@@ -48,7 +50,7 @@ function AppointmentIncomeRow({ appt, onChanged }: { appt: Appointment; onChange
             <PawPrint className="size-3.5 text-primary" /> {appt.pet_name}
             <span className="text-muted-foreground font-normal">· {appt.owner_name}</span>
           </p>
-          <p className="text-xs text-muted-foreground">{appt.appointment_date} · {serviceLabel(appt.service)}</p>
+          <p className="text-xs text-muted-foreground">{appt.appointment_date} · {serviceLabel(appt.service)} · {paymentMethodLabel(appt.payment_method)}</p>
         </div>
         <div className="flex items-center gap-2">
           {!editing ? (
@@ -117,7 +119,7 @@ function ManualIncomeRow({ income, onChanged }: { income: ManualIncome; onChange
             <p className="text-sm font-medium flex items-center gap-1.5">
               <Receipt className="size-3.5 text-primary" /> {income.description || 'Ingreso manual'}
             </p>
-            <p className="text-xs text-muted-foreground">{income.income_date}</p>
+            <p className="text-xs text-muted-foreground">{income.income_date} · {paymentMethodLabel(income.payment_method)}</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-primary">{formatCLP(income.amount)}</span>
@@ -161,6 +163,7 @@ function AddManualIncomeForm({ onAdded }: { onAdded: () => void }) {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const [method, setMethod] = useState<PaymentMethod>('efectivo')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -169,7 +172,7 @@ function AddManualIncomeForm({ onAdded }: { onAdded: () => void }) {
     if (!a || a <= 0) { setError('Ingresa un monto válido'); return }
     setError(null)
     startTransition(async () => {
-      const r = await addManualIncome(a, date, description)
+      const r = await addManualIncome(a, date, description, method)
       if (r.success) { setAmount(''); setDescription(''); onAdded() }
       else setError(r.error ?? 'Error')
     })
@@ -182,6 +185,9 @@ function AddManualIncomeForm({ onAdded }: { onAdded: () => void }) {
         <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-9 text-sm" />
         <Input type="number" min="0" placeholder="Monto" value={amount} onChange={(e) => setAmount(e.target.value)} className="h-9 text-sm w-32" />
       </div>
+      <Select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)} className="h-9 text-sm">
+        {PAYMENT_METHODS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+      </Select>
       {error && <p className="text-xs text-destructive">{error}</p>}
       <Button size="sm" onClick={submit} disabled={isPending}>
         {isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />} Agregar ingreso

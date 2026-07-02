@@ -66,6 +66,7 @@ create table appointments (
   arrival_time   timestamptz,
   departure_time timestamptz,
   price_charged  numeric(10, 0),
+  payment_method text,
 
   notes      text,
   created_at timestamptz not null default now(),
@@ -99,8 +100,21 @@ create table manual_incomes (
   amount      numeric(10, 0) not null check (amount > 0),
   description text,
   income_date date not null default current_date,
+  payment_method text,
   created_at  timestamptz not null default now()
 );
+
+-- Gastos / egresos del negocio
+create table expenses (
+  id             uuid primary key default gen_random_uuid(),
+  amount         numeric(10, 0) not null check (amount > 0),
+  category       text not null,
+  description    text,
+  expense_date   date not null default current_date,
+  payment_method text,
+  created_at     timestamptz not null default now()
+);
+create index expenses_date_idx on expenses(expense_date);
 
 create table inventory_movements (
   id           uuid primary key default gen_random_uuid(),
@@ -124,6 +138,7 @@ alter table blocked_dates       enable row level security;
 alter table inventory_products  enable row level security;
 alter table inventory_movements enable row level security;
 alter table manual_incomes      enable row level security;
+alter table expenses            enable row level security;
 
 create policy "staff_all_clients"      on clients             for all to authenticated using (true) with check (true);
 create policy "staff_all_pets"         on pets                for all to authenticated using (true) with check (true);
@@ -132,6 +147,7 @@ create policy "staff_all_blocked"      on blocked_dates       for all to authent
 create policy "staff_all_products"     on inventory_products  for all to authenticated using (true) with check (true);
 create policy "staff_all_movements"    on inventory_movements for all to authenticated using (true) with check (true);
 create policy "staff_all_manual_incomes" on manual_incomes    for all to authenticated using (true) with check (true);
+create policy "staff_all_expenses"     on expenses            for all to authenticated using (true) with check (true);
 
 -- ============================================================
 -- Paso 4: Funciones
