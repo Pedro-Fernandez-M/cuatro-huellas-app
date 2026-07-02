@@ -25,7 +25,9 @@ function downloadCsv(data: AccountingData) {
   rows.push(['Cuatro Huellas — Contabilidad', data.month])
   rows.push([])
   rows.push(['Resumen'])
-  rows.push(['Ingresos', data.incomeTotal])
+  rows.push(['Ingresos brutos', data.incomeTotal])
+  rows.push(['Comisiones tarjeta', data.commissionTotal])
+  rows.push(['Ingresos netos', data.netIncomeTotal])
   rows.push(['Gastos', data.expenseTotal])
   rows.push(['Utilidad', data.profit])
   rows.push([])
@@ -129,10 +131,10 @@ export default function AccountingManager({
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
         <div className="p-6 rounded-2xl border border-border bg-card">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2 flex items-center gap-1.5"><TrendingUp className="size-3.5 text-green-600" /> Ingresos</p>
-          <p className="text-3xl font-black text-green-600">{loading ? '…' : formatCLP(data.incomeTotal)}</p>
+          <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2 flex items-center gap-1.5"><TrendingUp className="size-3.5 text-green-600" /> Ingresos netos</p>
+          <p className="text-3xl font-black text-green-600">{loading ? '…' : formatCLP(data.netIncomeTotal)}</p>
         </div>
         <div className="p-6 rounded-2xl border border-border bg-card">
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2 flex items-center gap-1.5"><TrendingDown className="size-3.5 text-destructive" /> Gastos</p>
@@ -142,6 +144,12 @@ export default function AccountingManager({
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2 flex items-center gap-1.5"><Wallet className="size-3.5 text-primary" /> Utilidad</p>
           <p className={`text-3xl font-black ${data.profit >= 0 ? 'text-primary' : 'text-destructive'}`}>{loading ? '…' : formatCLP(data.profit)}</p>
         </div>
+      </div>
+      {/* Detalle bruto → comisiones → neto */}
+      <div className="flex items-center gap-x-6 gap-y-1 flex-wrap text-xs text-muted-foreground mb-8 px-1">
+        <span>Ingresos brutos: <strong className="text-foreground">{formatCLP(data.incomeTotal)}</strong></span>
+        <span>− Comisiones tarjeta: <strong className="text-destructive">{formatCLP(data.commissionTotal)}</strong></span>
+        <span>= Ingresos netos: <strong className="text-green-600">{formatCLP(data.netIncomeTotal)}</strong></span>
       </div>
 
       {/* Desgloses */}
@@ -179,7 +187,9 @@ export default function AccountingManager({
             )}
           </div>
           <div className="sm:border-l sm:border-border sm:pl-4 space-y-1.5 text-sm">
-            <div className="flex items-center justify-between"><span className="text-muted-foreground">Total ingresos</span><span className="font-semibold text-green-600">{formatCLP(cash.incomeTotal)}</span></div>
+            <div className="flex items-center justify-between"><span className="text-muted-foreground">Ingresos brutos</span><span className="font-semibold">{formatCLP(cash.incomeTotal)}</span></div>
+            <div className="flex items-center justify-between"><span className="text-muted-foreground">Comisiones tarjeta</span><span className="font-semibold text-destructive">−{formatCLP(cash.commissionTotal)}</span></div>
+            <div className="flex items-center justify-between"><span className="text-muted-foreground">Ingresos netos</span><span className="font-semibold text-green-600">{formatCLP(cash.netIncomeTotal)}</span></div>
             <div className="flex items-center justify-between"><span className="text-muted-foreground">Total gastos</span><span className="font-semibold text-destructive">−{formatCLP(cash.expenseTotal)}</span></div>
             <div className="flex items-center justify-between pt-1.5 border-t border-border"><span className="font-bold">Neto del día</span><span className={`font-black ${cash.net >= 0 ? 'text-primary' : 'text-destructive'}`}>{formatCLP(cash.net)}</span></div>
           </div>

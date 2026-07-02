@@ -7,9 +7,9 @@ import { checkIn, checkOut, updateArrivalDeparture } from '@/actions/appointment
 import { serviceLabel } from '@/lib/constants/services'
 import { sizeLabel } from '@/lib/constants/sizes'
 import { addonLabel, coatConditionLabel } from '@/lib/constants/addons'
-import { PAYMENT_METHODS } from '@/lib/constants/finance'
+import { PAYMENT_METHODS, isCardMethod, cardCommission, netReceived } from '@/lib/constants/finance'
 import { estimateTotal } from '@/lib/pricing'
-import { formatDateLong, toDateTimeLocalValue } from '@/lib/date'
+import { formatDateLong, toDateTimeLocalValue, formatCLP } from '@/lib/date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -140,9 +140,16 @@ export default function CheckinManager({ appointment, pet }: { appointment: Appo
           <Label>Valor del servicio (CLP)</Label>
           <Input type="number" min="0" placeholder="Ej: 15000" value={price} onChange={(e) => setPrice(e.target.value)} className="mb-4" />
           <Label>Método de pago</Label>
-          <Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)} className="mb-4">
+          <Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)} className="mb-2">
             {PAYMENT_METHODS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
           </Select>
+          {isCardMethod(paymentMethod) && Number(price) > 0 && (
+            <p className="text-xs text-muted-foreground mb-4">
+              Comisión máquina: <span className="text-destructive font-medium">−{formatCLP(cardCommission(Number(price), paymentMethod))}</span>
+              {' · '}Recibes: <span className="text-green-600 font-semibold">{formatCLP(netReceived(Number(price), paymentMethod))}</span>
+            </p>
+          )}
+          {!isCardMethod(paymentMethod) && <div className="mb-4" />}
           <Label>Hora de salida</Label>
           <Input type="datetime-local" value={departureValue} onChange={(e) => setDepartureValue(e.target.value)} className="mb-3" />
           {appt.status === 'arrived' ? (

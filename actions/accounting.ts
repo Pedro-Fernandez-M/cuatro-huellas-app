@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { serviceLabel } from '@/lib/constants/services'
-import { paymentMethodLabel } from '@/lib/constants/finance'
+import { paymentMethodLabel, cardCommission } from '@/lib/constants/finance'
 import type { Appointment, ManualIncome, Expense } from '@/types'
 
 function monthRange(month: string) {
@@ -15,9 +15,11 @@ function monthRange(month: string) {
 
 export interface AccountingData {
   month: string
-  incomeTotal: number
+  incomeTotal: number       // bruto (lo que pagó el cliente)
+  commissionTotal: number   // comisiones de tarjeta
+  netIncomeTotal: number    // lo que realmente recibió el local
   expenseTotal: number
-  profit: number
+  profit: number            // netIncome − gastos
   incomeByMethod: { method: string; total: number }[]
   incomeByService: { service: string; total: number }[]
   expenseByCategory: { category: string; total: number }[]
@@ -49,6 +51,10 @@ export async function getAccountingData(month: string): Promise<AccountingData> 
   const incomeTotal =
     appointments.reduce((s, a) => s + (Number(a.price_charged) || 0), 0) +
     manuals.reduce((s, m) => s + (Number(m.amount) || 0), 0)
+  const commissionTotal =
+    appointments.reduce((s, a) => s + cardCommission(Number(a.price_charged) || 0, a.payment_method), 0) +
+    manuals.reduce((s, m) => s + cardCommission(Number(m.amount) || 0, m.payment_method), 0)
+  const netIncomeTotal = incomeTotal - commissionTotal
   const expenseTotal = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0)
 
   // Ingresos por método de pago (citas + manuales)
@@ -83,8 +89,10 @@ export async function getAccountingData(month: string): Promise<AccountingData> 
   return {
     month,
     incomeTotal,
+    commissionTotal,
+    netIncomeTotal,
     expenseTotal,
-    profit: incomeTotal - expenseTotal,
+    profit: netIncomeTotal - expenseTotal,
     incomeByMethod: Array.from(methodMap.entries()).map(([method, total]) => ({ method, total })).sort(sortDesc),
     incomeByService: Array.from(serviceMap.entries()).map(([service, total]) => ({ service, total })).sort(sortDesc),
     expenseByCategory: Array.from(catMap.entries()).map(([category, total]) => ({ category, total })).sort(sortDesc),
@@ -98,6 +106,8 @@ export interface CashClose {
   date: string
   byMethod: { method: string; total: number }[]
   incomeTotal: number
+  commissionTotal: number
+  netIncomeTotal: number
   expenseTotal: number
   net: number
 }
@@ -120,23 +130,31 @@ export async function getCashClose(date: string): Promise<CashClose> {
   const expenses = expenseRes.data ?? []
 
   const methodMap = new Map<string, number>()
+  let commissionTotal = 0
   for (const a of appts) {
+    const amt = Number(a.price_charged) || 0
     const k = paymentMethodLabel(a.payment_method as string | null)
-    methodMap.set(k, (methodMap.get(k) ?? 0) + (Number(a.price_charged) || 0))
+    methodMap.set(k, (methodMap.get(k) ?? 0) + amt)
+    commissionTotal += cardCommission(amt, a.payment_method as string | null)
   }
   for (const m of manuals) {
+    const amt = Number(m.amount) || 0
     const k = paymentMethodLabel(m.payment_method as string | null)
-    methodMap.set(k, (methodMap.get(k) ?? 0) + (Number(m.amount) || 0))
+    methodMap.set(k, (methodMap.get(k) ?? 0) + amt)
+    commissionTotal += cardCommission(amt, m.payment_method as string | null)
   }
 
   const incomeTotal = Array.from(methodMap.values()).reduce((s, v) => s + v, 0)
+  const netIncomeTotal = incomeTotal - commissionTotal
   const expenseTotal = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0)
 
   return {
     date,
     byMethod: Array.from(methodMap.entries()).map(([method, total]) => ({ method, total })).sort((a, b) => b.total - a.total),
     incomeTotal,
+    commissionTotal,
+    netIncomeTotal,
     expenseTotal,
-    net: incomeTotal - expenseTotal,
+    net: netIncomeTotal - expenseTotal,
   }
 }
