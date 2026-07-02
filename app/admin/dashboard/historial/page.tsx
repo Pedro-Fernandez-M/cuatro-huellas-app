@@ -35,10 +35,13 @@ export default async function HistorialPage({
   const to = `${month}-${String(lastDay).padStart(2, '0')}`
 
   const appointments = await listAppointmentsForRange(from, to)
-  // Más recientes primero dentro del mes
-  const sorted = [...appointments].sort((a, b) =>
-    b.appointment_date.localeCompare(a.appointment_date) || b.start_time.localeCompare(a.start_time)
-  )
+  // Historial = solo visitas finalizadas (no las que están por llegar o en atención)
+  const FINISHED = ['completed', 'no_show', 'cancelled']
+  const sorted = appointments
+    .filter((a) => FINISHED.includes(a.status))
+    .sort((a, b) =>
+      b.appointment_date.localeCompare(a.appointment_date) || b.start_time.localeCompare(a.start_time)
+    )
 
   const completed = sorted.filter((a) => a.status === 'completed')
   const noShow = sorted.filter((a) => a.status === 'no_show')
@@ -56,7 +59,7 @@ export default async function HistorialPage({
   return (
     <div>
       <h1 className="text-2xl font-black tracking-tight mb-1">Historial de visitas</h1>
-      <p className="text-sm text-muted-foreground mb-6">Todas las citas del mes, incluyendo canceladas y no presentadas</p>
+      <p className="text-sm text-muted-foreground mb-6">Visitas finalizadas del mes (completadas, no presentadas y canceladas). Las que están en atención aparecen en Inicio.</p>
 
       <form className="mb-8">
         <input

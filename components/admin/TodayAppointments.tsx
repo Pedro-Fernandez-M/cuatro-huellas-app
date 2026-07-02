@@ -3,25 +3,17 @@
 import { useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Clock, LogIn, UserX, Loader2, ChevronRight } from 'lucide-react'
+import { Clock, LogIn, UserX, Loader2, ChevronRight, PawPrint, Scissors } from 'lucide-react'
 import type { Appointment } from '@/types'
 import { checkIn, markNoShow } from '@/actions/appointments'
 import { serviceLabel } from '@/lib/constants/services'
 import { sizeLabel } from '@/lib/constants/sizes'
+import { formatCLP } from '@/lib/date'
 import { Badge } from '@/components/ui/badge'
-
-const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'primary' | 'success' | 'warning' }> = {
-  booked: { label: 'Reservado', variant: 'primary' },
-  arrived: { label: 'En el local', variant: 'warning' },
-  completed: { label: 'Completado', variant: 'success' },
-  cancelled: { label: 'Cancelado', variant: 'default' },
-  no_show: { label: 'No llegó', variant: 'default' },
-}
 
 function Row({ appt }: { appt: Appointment }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const badge = STATUS_BADGE[appt.status]
 
   function markArrived() {
     startTransition(async () => {
@@ -37,6 +29,10 @@ function Row({ appt }: { appt: Appointment }) {
     })
   }
 
+  const arrivedTime = appt.arrival_time
+    ? new Date(appt.arrival_time).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+    : null
+
   return (
     <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/40 transition-all flex-wrap">
       <Link href={`/admin/dashboard/checkin/${appt.id}`} className="flex items-center gap-4 flex-1 min-w-0">
@@ -50,8 +46,6 @@ function Row({ appt }: { appt: Appointment }) {
       </Link>
 
       <div className="flex items-center gap-2">
-        <Badge variant={badge.variant}>{badge.label}</Badge>
-
         {appt.status === 'booked' && (
           <>
             <button
@@ -75,24 +69,56 @@ function Row({ appt }: { appt: Appointment }) {
         )}
 
         {appt.status === 'arrived' && (
-          <Link
-            href={`/admin/dashboard/checkin/${appt.id}`}
-            className="inline-flex items-center gap-1 h-9 px-3 rounded-lg text-xs font-bold gradient-warm text-primary-foreground hover:opacity-90 transition-all"
-          >
-            Marcar salida <ChevronRight className="size-3.5" />
-          </Link>
+          <>
+            {arrivedTime && <span className="text-xs text-muted-foreground hidden sm:inline">Llegó {arrivedTime}</span>}
+            <Link
+              href={`/admin/dashboard/checkin/${appt.id}`}
+              className="inline-flex items-center gap-1 h-9 px-3 rounded-lg text-xs font-bold gradient-warm text-primary-foreground hover:opacity-90 transition-all"
+            >
+              Cerrar atención <ChevronRight className="size-3.5" />
+            </Link>
+          </>
+        )}
+
+        {(appt.status === 'completed' || appt.status === 'no_show') && (
+          <>
+            {appt.status === 'completed' && appt.price_charged != null && (
+              <span className="text-sm font-bold text-primary">{formatCLP(Number(appt.price_charged))}</span>
+            )}
+            <Badge variant={appt.status === 'completed' ? 'success' : 'default'}>
+              {appt.status === 'completed' ? 'Completado' : 'No llegó'}
+            </Badge>
+          </>
         )}
       </div>
     </div>
   )
 }
 
-export default function TodayAppointments({ appointments }: { appointments: Appointment[] }) {
+function Section({ title, icon: Icon, appts, accent }: { title: string; icon: typeof PawPrint; appts: Appointment[]; accent?: boolean }) {
+  if (appts.length === 0) return null
   return (
-    <div className="space-y-3">
-      {appointments.map((a) => (
-        <Row key={a.id} appt={a} />
-      ))}
+    <div>
+      <h2 className={`text-sm font-bold uppercase tracking-wide mb-3 flex items-center gap-2 ${accent ? 'text-primary' : 'text-muted-foreground'}`}>
+        <Icon className="size-4" /> {title} <span className="font-normal">({appts.length})</span>
+      </h2>
+      <div className="space-y-2.5">
+        {appts.map((a) => <Row key={a.id} appt={a} />)}
+      </div>
+    </div>
+  )
+}
+
+export default function TodayAppointments({ appointments }: { appointments: Appointment[] }) {
+  const enAtencion = appointments.filter((a) => a.status === 'arrived')
+  const porLlegar = appointments.filter((a) => a.status === 'booked')
+  const finalizados = appointments.filter((a) => a.status === 'completed' || a.status === 'no_show')
+
+  return (
+    <div className="space-y-8">
+      <Section title="En atención" icon={Scissors} appts={enAtencion} accent />
+      <Section title="Por llegar" icon={Clock} appts={porLlegar} />
+      <Section title="Finalizados hoy" icon={PawPrint} appts={finalizados} />
     </div>
   )
 }
