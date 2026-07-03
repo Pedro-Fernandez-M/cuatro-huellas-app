@@ -14,13 +14,19 @@ import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
-import { SERVICES, type ServiceId } from '@/lib/constants/services'
-import { SIZES, isMorningOnly, sizeBasePrice, type SizeCategory } from '@/lib/constants/sizes'
+import { SIZES, isMorningOnly, type SizeCategory } from '@/lib/constants/sizes'
 import { ADDONS, COAT_CONDITIONS, type AddonId, type CoatCondition } from '@/lib/constants/addons'
 import { BREEDS, OTHER_BREED_OPTION } from '@/lib/constants/breeds'
 import { estimateTotal } from '@/lib/pricing'
 import { formatCLP } from '@/lib/date'
 import { getAvailableSlotsAction, getBlockedDatesAction, createBooking } from '@/actions/booking'
+import type { Service } from '@/types'
+import type { PriceMap } from '@/actions/catalog'
+
+interface Props {
+  services: Service[]
+  prices: PriceMap
+}
 
 type Step = 'service' | 'size' | 'datetime' | 'extras' | 'details' | 'success'
 
@@ -32,7 +38,10 @@ const STEPS: { key: Step; label: string }[] = [
   { key: 'details', label: 'Datos' },
 ]
 
-const SERVICE_ICONS = { bano_mantencion: Droplets, servicio_completo: Scissors, bano_comercial: Sparkles, deslanado: Layers }
+const SERVICE_ICONS: Record<string, typeof Scissors> = { bano_mantencion: Droplets, servicio_completo: Scissors, bano_comercial: Sparkles, deslanado: Layers }
+function serviceIcon(id: string) {
+  return SERVICE_ICONS[id] ?? Scissors
+}
 
 const detailsSchema = z.object({
   petName: z.string().min(1, 'Ingresa el nombre de tu mascota'),
@@ -73,9 +82,9 @@ function StepBar({ current }: { current: Step }) {
   )
 }
 
-export default function BookingWizard() {
+export default function BookingWizard({ services, prices }: Props) {
   const [step, setStep] = useState<Step>('service')
-  const [service, setService] = useState<ServiceId | null>(null)
+  const [service, setService] = useState<string | null>(null)
   const [size, setSize] = useState<SizeCategory | null>(null)
   const [date, setDate] = useState<string | null>(null)
   const [time, setTime] = useState<string | null>(null)
@@ -97,7 +106,7 @@ export default function BookingWizard() {
     getBlockedDatesAction().then(setBlockedDates)
   }, [])
 
-  function selectService(s: ServiceId) {
+  function selectService(s: string) {
     setService(s)
     setStep('size')
   }
@@ -156,7 +165,7 @@ export default function BookingWizard() {
     })
   }
 
-  const selectedServiceObj = SERVICES.find((s) => s.id === service)
+  const selectedServiceObj = services.find((s) => s.id === service)
   const selectedSizeObj = SIZES.find((s) => s.id === size)
 
   if (step === 'success') {
@@ -171,7 +180,7 @@ export default function BookingWizard() {
         <div className="max-w-sm mx-auto bg-card border border-border rounded-2xl p-6 text-left space-y-3 mb-8">
           <div className="flex items-center gap-3">
             <PawPrint className="size-4 text-primary shrink-0" />
-            <span className="text-sm"><span className="text-muted-foreground">Servicio:</span> <strong>{selectedServiceObj?.label}</strong></span>
+            <span className="text-sm"><span className="text-muted-foreground">Servicio:</span> <strong>{selectedServiceObj?.name}</strong></span>
           </div>
           <div className="flex items-center gap-3">
             <Dog className="size-4 text-primary shrink-0" />
@@ -217,8 +226,8 @@ export default function BookingWizard() {
           <h2 className="text-xl font-bold mb-1">¿Qué servicio necesita tu peludo?</h2>
           <p className="text-sm text-muted-foreground mb-6">Elige un servicio</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {SERVICES.map((s) => {
-              const Icon = SERVICE_ICONS[s.id]
+            {services.map((s) => {
+              const Icon = serviceIcon(s.id)
               return (
                 <button
                   key={s.id}
@@ -228,7 +237,7 @@ export default function BookingWizard() {
                   <div className="p-2.5 rounded-lg bg-primary/10 inline-flex mb-4">
                     <Icon className="size-4 text-primary" />
                   </div>
-                  <p className="font-semibold text-sm mb-1">{s.label}</p>
+                  <p className="font-semibold text-sm mb-1">{s.name}</p>
                   <p className="text-xs text-muted-foreground leading-relaxed">{s.description}</p>
                 </button>
               )
@@ -273,7 +282,7 @@ export default function BookingWizard() {
           </button>
           <div className="flex items-center gap-2 flex-wrap mb-5 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5 bg-secondary/60 rounded-lg px-3 py-1.5">
-              <PawPrint className="size-3.5 text-primary" /> {selectedServiceObj?.label}
+              <PawPrint className="size-3.5 text-primary" /> {selectedServiceObj?.name}
             </span>
             <span className="flex items-center gap-1.5 bg-secondary/60 rounded-lg px-3 py-1.5">
               <Dog className="size-3.5 text-primary" /> {selectedSizeObj?.label}
@@ -368,7 +377,7 @@ export default function BookingWizard() {
             <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
               <span className="text-sm font-medium">Valor estimado</span>
               <span className="text-lg font-black text-primary">
-                {formatCLP(estimateTotal({ sizeCategory: size, addons, coatCondition }))}
+                {formatCLP(estimateTotal({ sizeCategory: size, addons, coatCondition }, prices))}
               </span>
             </div>
           )}
@@ -395,7 +404,7 @@ export default function BookingWizard() {
 
           <div className="bg-card border border-border rounded-xl p-4 mb-6 text-sm space-y-1.5">
             <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
-              <PawPrint className="size-3.5 text-primary" /> <span>{selectedServiceObj?.label}</span>
+              <PawPrint className="size-3.5 text-primary" /> <span>{selectedServiceObj?.name}</span>
               <span className="mx-1">·</span>
               <Dog className="size-3.5 text-primary" /> <span>{selectedSizeObj?.label}</span>
             </div>
@@ -409,7 +418,7 @@ export default function BookingWizard() {
             {size && (
               <div className="flex items-center justify-between pt-2 mt-1 border-t border-border">
                 <span className="text-muted-foreground">Valor estimado</span>
-                <span className="font-black text-primary">{formatCLP(estimateTotal({ sizeCategory: size, addons, coatCondition }))}</span>
+                <span className="font-black text-primary">{formatCLP(estimateTotal({ sizeCategory: size, addons, coatCondition }, prices))}</span>
               </div>
             )}
           </div>

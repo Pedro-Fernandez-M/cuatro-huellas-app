@@ -43,6 +43,6 @@ export const SERVICES: { id: ServiceId; label: string; description: string; incl
   },
 ]
 
-export function serviceLabel(id: ServiceId): string {
+export function serviceLabel(id: string): string {
   return SERVICES.find((s) => s.id === id)?.label ?? id
 }

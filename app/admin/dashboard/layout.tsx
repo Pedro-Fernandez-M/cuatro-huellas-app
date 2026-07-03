@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   LayoutDashboard, CalendarDays, UserPlus,
-  Users, TrendingUp, Package, LogOut, History, Calculator,
+  Users, TrendingUp, Package, LogOut, History, Calculator, Scissors,
 } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { signOut } from '@/actions/auth'
@@ -15,6 +15,7 @@ const NAV = [
   { href: '/admin/dashboard/ingresos', label: 'Ingresos', icon: TrendingUp },
   { href: '/admin/dashboard/contabilidad', label: 'Contabilidad', icon: Calculator },
   { href: '/admin/dashboard/inventario', label: 'Inventario', icon: Package },
+  { href: '/admin/dashboard/servicios', label: 'Servicios', icon: Scissors },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

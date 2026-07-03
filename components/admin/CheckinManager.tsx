@@ -29,13 +29,13 @@ function nowLocalInputValue() {
   return toDateTimeLocalValue(new Date().toISOString())
 }
 
-export default function CheckinManager({ appointment, pet }: { appointment: Appointment; pet?: Pet | null }) {
+export default function CheckinManager({ appointment, pet, prices }: { appointment: Appointment; pet?: Pet | null; prices?: Record<string, number> }) {
   const [appt, setAppt] = useState(appointment)
   const [arrivalValue, setArrivalValue] = useState(toDateTimeLocalValue(appt.arrival_time) || nowLocalInputValue())
   const [departureValue, setDepartureValue] = useState(toDateTimeLocalValue(appt.departure_time) || nowLocalInputValue())
   const [price, setPrice] = useState(
     appt.price_charged?.toString() ??
-      estimateTotal({ sizeCategory: appt.size_category, addons: appt.addons, coatCondition: appt.coat_condition }).toString()
+      estimateTotal({ sizeCategory: appt.size_category, addons: appt.addons, coatCondition: appt.coat_condition }, prices).toString()
   )
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(appt.payment_method ?? 'efectivo')
   const [error, setError] = useState<string | null>(null)

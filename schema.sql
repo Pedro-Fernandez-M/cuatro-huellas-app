@@ -52,7 +52,7 @@ create table appointments (
   pet_breed     text not null,
   size_category size_category_type not null,
 
-  service        service_type not null,
+  service        text not null,
   addons         text[] not null default '{}',
   coat_condition text,
 
@@ -116,6 +116,24 @@ create table expenses (
 );
 create index expenses_date_idx on expenses(expense_date);
 
+-- Servicios (editables desde el panel)
+create table services (
+  id          text primary key,
+  name        text not null,
+  description text,
+  includes    text[] not null default '{}',
+  active      boolean not null default true,
+  sort_order  int not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+-- Precios (clave → monto)
+create table pricing (
+  key        text primary key,
+  amount     numeric(10, 0) not null default 0,
+  updated_at timestamptz not null default now()
+);
+
 create table inventory_movements (
   id           uuid primary key default gen_random_uuid(),
   product_id   uuid not null references inventory_products(id) on delete cascade,
@@ -139,6 +157,8 @@ alter table inventory_products  enable row level security;
 alter table inventory_movements enable row level security;
 alter table manual_incomes      enable row level security;
 alter table expenses            enable row level security;
+alter table services            enable row level security;
+alter table pricing             enable row level security;
 
 create policy "staff_all_clients"      on clients             for all to authenticated using (true) with check (true);
 create policy "staff_all_pets"         on pets                for all to authenticated using (true) with check (true);
@@ -148,6 +168,10 @@ create policy "staff_all_products"     on inventory_products  for all to authent
 create policy "staff_all_movements"    on inventory_movements for all to authenticated using (true) with check (true);
 create policy "staff_all_manual_incomes" on manual_incomes    for all to authenticated using (true) with check (true);
 create policy "staff_all_expenses"     on expenses            for all to authenticated using (true) with check (true);
+create policy "services_public_read"   on services for select to anon using (active = true);
+create policy "services_staff_all"     on services for all to authenticated using (true) with check (true);
+create policy "pricing_public_read"    on pricing  for select to anon using (true);
+create policy "pricing_staff_all"      on pricing  for all to authenticated using (true) with check (true);
 
 -- ============================================================
 -- Paso 4: Funciones
@@ -160,7 +184,7 @@ create or replace function book_appointment(
   p_pet_name        text,
   p_pet_breed       text,
   p_size_category   size_category_type,
-  p_service         service_type,
+  p_service         text,
   p_addons          text[],
   p_coat_condition  text,
   p_appointment_date date,
@@ -226,7 +250,7 @@ end;
 $$;
 
 grant execute on function book_appointment(
-  text, text, text, text, size_category_type, service_type, text[], text,
+  text, text, text, text, size_category_type, text, text[], text,
   date, time, int, appointment_source, appointment_status, timestamptz
 ) to anon, authenticated;
 
@@ -388,5 +412,24 @@ insert into inventory_products (category, variant, display_name, current_stock) 
   ('Alcohol',       null, 'Alcohol',       0),
   ('Polvo de uñas', null, 'Polvo de uñas', 0),
   ('Colonias',      null, 'Colonias',      0);
+
+-- Servicios iniciales
+insert into services (id, name, description, includes, sort_order) values
+  ('bano_mantencion', 'Baño con mantención',
+   'Mantiene la higiene y el pelaje en óptimo estado: se retoca la carita, se cepilla el pelaje completo, redondeo de patas y despeje sanitario.',
+   array['Retoque de carita','Cepillado completo','Redondeo de patas','Despeje sanitario'], 1),
+  ('servicio_completo', 'Servicio Completo Peluquería',
+   'Corte y modelado completo según la raza o tu preferencia.',
+   array['Baño desmugrante','Corte de pelo según raza o preferencia','Cepillado','Corte de uñas','Limpieza de oídos','Despeje de cojinetes'], 2),
+  ('bano_comercial', 'Baño Comercial', 'Baño estándar rápido y prolijo para tu mascota.', array[]::text[], 3),
+  ('deslanado', 'Deslanado (mantos de doble capa)',
+   'Retira el pelo muerto de la capa interna (subpelo) sin cortar el manto externo. Ideal para razas de doble capa.',
+   array['Baño desmugrante','Baño cosmético','Deslanado','Corte de uñas','Limpieza de oídos','Despeje de cojinetes','Despeje sanitario'], 4);
+
+-- Precios iniciales
+insert into pricing (key, amount) values
+  ('size_pequena', 21000), ('size_mediana', 24000), ('size_grande', 35000), ('size_extra_grande', 70000),
+  ('addon_lavado_dientes', 4000), ('addon_pintado_unas', 3000), ('addon_retiro_feca', 5000),
+  ('addon_masticable_pulgas', 6500), ('coat_mal_estado', 7000);
 
 -- Paso 6 (usuario admin) se hace desde el Dashboard, no por SQL — ver SETUP.md.

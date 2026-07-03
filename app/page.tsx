@@ -3,11 +3,13 @@ import {
   Scissors, Droplets, Sparkles, Layers, Clock, ShieldCheck, Check,
   CalendarCheck, ChevronRight, MapPin, Dog, Heart, PawPrint,
 } from 'lucide-react'
-import { SERVICES } from '@/lib/constants/services'
 import { SIZES } from '@/lib/constants/sizes'
 import { formatCLP } from '@/lib/date'
+import { getCatalog } from '@/actions/catalog'
 import { Logo } from '@/components/Logo'
 import { GalleryImage } from '@/components/GalleryImage'
+
+export const dynamic = 'force-dynamic'
 
 function IgIcon({ className }: { className?: string }) {
   return (
@@ -22,9 +24,13 @@ function IgIcon({ className }: { className?: string }) {
 const INSTAGRAM_URL = 'https://www.instagram.com/cuatro.huellas.valdivia/'
 const INSTAGRAM_HANDLE = '@cuatro.huellas.valdivia'
 
-const SERVICE_ICONS = { bano_mantencion: Droplets, servicio_completo: Scissors, bano_comercial: Sparkles, deslanado: Layers }
+const SERVICE_ICONS: Record<string, typeof Scissors> = { bano_mantencion: Droplets, servicio_completo: Scissors, bano_comercial: Sparkles, deslanado: Layers }
+function serviceIcon(id: string) {
+  return SERVICE_ICONS[id] ?? Scissors
+}
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { services, prices } = await getCatalog()
   return (
     <div className="flex flex-col min-h-screen">
 
@@ -122,16 +128,16 @@ export default function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 text-center">Nuestros servicios</h2>
             <p className="text-muted-foreground text-center mb-12">Elige el que necesita tu peludo</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-10">
-              {SERVICES.map((service) => {
-                const Icon = SERVICE_ICONS[service.id]
+              {services.map((service) => {
+                const Icon = serviceIcon(service.id)
                 return (
                   <div key={service.id} className="p-6 rounded-2xl border border-border bg-card hover:border-primary/40 transition-all">
                     <div className="p-3 rounded-xl bg-primary/10 inline-flex mb-5">
                       <Icon className="size-5 text-primary" />
                     </div>
-                    <h3 className="font-bold text-base mb-2">{service.label}</h3>
+                    <h3 className="font-bold text-base mb-2">{service.name}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed mb-3">{service.description}</p>
-                    {service.includes && (
+                    {service.includes && service.includes.length > 0 && (
                       <ul className="space-y-1">
                         {service.includes.map((item) => (
                           <li key={item} className="text-xs text-muted-foreground flex items-center gap-1.5">
@@ -166,7 +172,7 @@ export default function HomePage() {
                   <Dog className="size-6 text-primary mx-auto mb-3" />
                   <p className="font-bold text-sm mb-1">{size.label}</p>
                   <p className="text-xs text-muted-foreground mb-2">{size.weightRange}</p>
-                  <p className="text-base font-black text-primary">{formatCLP(size.price)}</p>
+                  <p className="text-base font-black text-primary">{formatCLP(prices[`size_${size.id}`] ?? size.price)}</p>
                   <p className="text-[10px] text-muted-foreground">valor referencial</p>
                 </div>
               ))}

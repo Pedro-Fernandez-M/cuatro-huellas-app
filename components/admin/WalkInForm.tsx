@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2, Check } from 'lucide-react'
-import { SERVICES, type ServiceId } from '@/lib/constants/services'
 import { SIZES, type SizeCategory } from '@/lib/constants/sizes'
 import { ADDONS, COAT_CONDITIONS, type AddonId, type CoatCondition } from '@/lib/constants/addons'
 import { BREEDS, OTHER_BREED_OPTION } from '@/lib/constants/breeds'
@@ -30,8 +29,8 @@ const schema = z.object({
 )
 type FormValues = z.infer<typeof schema>
 
-export default function WalkInForm() {
-  const [service, setService] = useState<ServiceId>(SERVICES[0].id)
+export default function WalkInForm({ services }: { services: { id: string; name: string }[] }) {
+  const [service, setService] = useState<string>(services[0]?.id ?? '')
   const [size, setSize] = useState<SizeCategory>(SIZES[0].id)
   const [addons, setAddons] = useState<AddonId[]>([])
   const [coatCondition, setCoatCondition] = useState<CoatCondition | null>(null)
@@ -112,8 +111,8 @@ export default function WalkInForm() {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
         <Label>Servicio</Label>
-        <Select value={service} onChange={(e) => setService(e.target.value as ServiceId)}>
-          {SERVICES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+        <Select value={service} onChange={(e) => setService(e.target.value)}>
+          {services.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </Select>
       </div>
 

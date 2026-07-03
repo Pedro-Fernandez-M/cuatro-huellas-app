@@ -38,7 +38,7 @@ export interface Appointment {
   pet_breed: string
   size_category: SizeCategory
 
-  service: ServiceId
+  service: string
   addons: AddonId[]
   coat_condition: CoatCondition | null
 
@@ -75,6 +75,16 @@ export interface ManualIncome {
   created_at: string
 }
 
+export interface Service {
+  id: string
+  name: string
+  description: string | null
+  includes: string[]
+  active: boolean
+  sort_order: number
+  created_at?: string
+}
+
 export interface Expense {
   id: string
   amount: number
@@ -109,7 +119,7 @@ export interface InventoryMovement {
 }
 
 export interface BookingInput {
-  service: ServiceId
+  service: string
   sizeCategory: SizeCategory
   addons: AddonId[]
   coatCondition: CoatCondition | null
