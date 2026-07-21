@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { CalendarDays, Ban, X, Loader2, Clock } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { CalendarDays, Ban, X, Loader2, Clock, LogIn, ChevronRight } from 'lucide-react'
 import type { Appointment, BlockedDate } from '@/types'
-import { cancelAppointment, markNoShow, rescheduleAppointment } from '@/actions/appointments'
+import { cancelAppointment, markNoShow, rescheduleAppointment, checkIn } from '@/actions/appointments'
 import { blockDate, unblockDate } from '@/actions/agenda'
 import { getAvailableSlotsAction } from '@/actions/booking'
 import { serviceLabel } from '@/lib/constants/services'
@@ -79,6 +81,7 @@ function RescheduleForm({ appt, onDone }: { appt: Appointment; onDone: () => voi
 }
 
 function AppointmentRow({ appt }: { appt: Appointment }) {
+  const router = useRouter()
   const [rescheduling, setRescheduling] = useState(false)
   const [isPending, startTransition] = useTransition()
   const badge = STATUS_BADGE[appt.status]
@@ -95,6 +98,28 @@ function AppointmentRow({ appt }: { appt: Appointment }) {
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant={badge.variant}>{badge.label}</Badge>
           <WhatsAppButton appointment={appt} />
+
+          {appt.status === 'booked' && (
+            <button
+              disabled={isPending}
+              onClick={() => startTransition(async () => { await checkIn(appt.id, new Date().toISOString()); router.refresh() })}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-bold text-white transition-all hover:opacity-90 disabled:opacity-60"
+              style={{ backgroundColor: 'oklch(0.55 0.15 150)' }}
+              title="Marcar que la mascota llegó (hora actual, editable después)"
+            >
+              {isPending ? <Loader2 className="size-3.5 animate-spin" /> : <LogIn className="size-3.5" />} Llegó
+            </button>
+          )}
+
+          {appt.status === 'arrived' && (
+            <Link
+              href={`/admin/dashboard/checkin/${appt.id}`}
+              className="inline-flex items-center gap-1 h-9 px-3 rounded-lg text-xs font-bold gradient-warm text-primary-foreground hover:opacity-90 transition-all"
+            >
+              Cerrar atención <ChevronRight className="size-3.5" />
+            </Link>
+          )}
+
           {canModify && (
             <>
               <Button size="sm" variant="outline" onClick={() => setRescheduling((v) => !v)}>
