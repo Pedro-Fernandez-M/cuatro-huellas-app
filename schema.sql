@@ -88,8 +88,10 @@ create table inventory_products (
   category      text not null,
   variant       text,
   display_name  text not null,
-  current_stock int not null default 0,
+  current_stock int not null default 0,        -- para líquidos se cuenta en DOSIS
   unit          text not null default 'unidad',
+  container_ml        int,                     -- ml que trae el envase (ej. bidón 5000 ml)
+  doses_per_container int,                     -- cuántas dosis rinde un envase
   created_at    timestamptz not null default now(),
   unique (category, variant)
 );
@@ -328,7 +330,7 @@ begin
   elsif v_dow = 6 then
     v_open := time '09:30'; v_close := time '13:00';
   else
-    v_open := time '09:00'; v_close := time '15:00';
+    v_open := time '09:30'; v_close := time '15:00';
   end if;
 
   v_is_big   := p_size_category in ('grande', 'extra_grande');

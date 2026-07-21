@@ -1,21 +1,22 @@
-// Poodle primero: es la raza más común entre los clientes del local.
+// Las 4 primeras son las razas más comunes del local, en orden de frecuencia.
 export const BREEDS: string[] = [
   'Poodle',
-  'Labrador',
-  'Golden Retriever',
-  'Bulldog Francés',
-  'Chihuahua',
-  'Schnauzer',
   'Yorkshire Terrier',
-  'Pug',
-  'Cocker Spaniel',
-  'Husky Siberiano',
-  'Pastor Alemán',
-  'Salchicha (Dachshund)',
   'Shih Tzu',
   'Maltés',
+  // Resto, alfabético
   'Beagle',
   'Boxer',
+  'Bulldog Francés',
+  'Chihuahua',
+  'Cocker Spaniel',
+  'Golden Retriever',
+  'Husky Siberiano',
+  'Labrador',
+  'Pastor Alemán',
+  'Pug',
+  'Salchicha (Dachshund)',
+  'Schnauzer',
   'Mestizo / Sin raza definida',
 ]
 

@@ -134,16 +134,15 @@ export async function rescheduleAppointment(
   newTime: string
 ): Promise<ActionResult> {
   const supabase = await createClient()
+  // El staff puede mover citas libremente (p_force), aunque el horario esté lleno.
   const { error } = await supabase.rpc('reschedule_appointment', {
     p_appointment_id: id,
     p_new_date: newDate,
     p_new_time: newTime,
+    p_force: true,
   })
 
   if (error) {
-    if (error.message?.includes('CAPACITY_FULL')) {
-      return { success: false, error: 'Ese horario ya tiene 3 perros agendados.' }
-    }
     return { success: false, error: 'No se pudo reprogramar.' }
   }
   revalidatePath('/admin/dashboard/agenda')
@@ -154,7 +153,15 @@ interface CreateWalkInResult extends ActionResult {
   appointmentId?: string
 }
 
-export async function createWalkIn(input: BookingInput): Promise<CreateWalkInResult> {
+/**
+ * Alta manual desde el panel. El staff está presente y decide, así que
+ * NO se aplica el tope de 3 perros ni la grilla de horarios (p_force).
+ * `alreadyHere` = la mascota ya está en el local (se marca como "en atención").
+ */
+export async function createWalkIn(
+  input: BookingInput,
+  alreadyHere = true
+): Promise<CreateWalkInResult> {
   if (!input.petName.trim() || !input.ownerName.trim() || !input.ownerPhone.trim()) {
     return { success: false, error: 'Faltan datos obligatorios.' }
   }
@@ -174,18 +181,17 @@ export async function createWalkIn(input: BookingInput): Promise<CreateWalkInRes
     p_start_time: input.time,
     p_duration_minutes: durationForSize(input.sizeCategory),
     p_source: 'walk_in',
-    p_status: 'arrived',
-    p_arrival_time: now,
+    p_status: alreadyHere ? 'arrived' : 'booked',
+    p_arrival_time: alreadyHere ? now : null,
+    p_force: true,
   })
 
   if (error) {
-    if (error.message?.includes('CAPACITY_FULL')) {
-      return { success: false, error: 'Ya hay 3 perros en el local en este momento.' }
-    }
-    return { success: false, error: 'No se pudo registrar el ingreso.' }
+    return { success: false, error: 'No se pudo registrar. Intenta nuevamente.' }
   }
 
   const appointment = data as Appointment
   revalidatePath('/admin/dashboard')
+  revalidatePath('/admin/dashboard/agenda')
   return { success: true, appointmentId: appointment.id }
 }

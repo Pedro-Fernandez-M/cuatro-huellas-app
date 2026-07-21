@@ -9,6 +9,7 @@ import { serviceLabel } from '@/lib/constants/services'
 import { paymentMethodLabel } from '@/lib/constants/finance'
 import { formatCLP } from '@/lib/date'
 import { ExpensesManager } from '@/components/admin/ExpensesManager'
+import { Tabs } from '@/components/ui/tabs'
 
 function currentMonth(): string {
   const d = new Date()
@@ -95,6 +96,7 @@ export default function AccountingManager({
   const [month, setMonth] = useState(initialData.month)
   const [data, setData] = useState<AccountingData>(initialData)
   const [loading, setLoading] = useState(false)
+  const [tab, setTab] = useState('resumen')
   const [cashDate, setCashDate] = useState(initialCashClose.date)
   const [cash, setCash] = useState<CashClose>(initialCashClose)
   const [, startTransition] = useTransition()
@@ -152,15 +154,30 @@ export default function AccountingManager({
         <span>= Ingresos netos: <strong className="text-green-600">{formatCLP(data.netIncomeTotal)}</strong></span>
       </div>
 
-      {/* Desgloses */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+      {/* Pestañas */}
+      <Tabs
+        className="mb-6"
+        active={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'resumen', label: 'Resumen', icon: PieChart },
+          { id: 'gastos', label: `Gastos (${data.expenses.length})`, icon: TrendingDown },
+          { id: 'caja', label: 'Cierre de caja', icon: Calculator },
+        ]}
+      />
+
+      {/* ── Resumen ── */}
+      {tab === 'resumen' && (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Breakdown title="Ingresos por método" icon={Wallet} rows={data.incomeByMethod.map((r) => ({ label: r.method, total: r.total }))} />
         <Breakdown title="Ingresos por servicio" icon={PieChart} rows={data.incomeByService.map((r) => ({ label: r.service, total: r.total }))} />
         <Breakdown title="Gastos por categoría" icon={TrendingDown} rows={data.expenseByCategory.map((r) => ({ label: r.category, total: r.total }))} />
       </div>
+      )}
 
-      {/* Cierre de caja diario */}
-      <div className="p-5 rounded-2xl border border-border bg-card mb-10">
+      {/* ── Cierre de caja diario ── */}
+      {tab === 'caja' && (
+      <div className="p-5 rounded-2xl border border-border bg-card">
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-4 flex items-center gap-2">
           <Calculator className="size-4" /> Cierre de caja
         </h2>
@@ -195,9 +212,12 @@ export default function AccountingManager({
           </div>
         </div>
       </div>
+      )}
 
-      {/* Gastos del mes */}
-      <ExpensesManager month={month} expenses={data.expenses} onChanged={() => reload(month)} />
+      {/* ── Gastos del mes ── */}
+      {tab === 'gastos' && (
+        <ExpensesManager month={month} expenses={data.expenses} onChanged={() => reload(month)} />
+      )}
     </div>
   )
 }

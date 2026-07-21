@@ -1,15 +1,16 @@
 import Link from 'next/link'
 import {
   LayoutDashboard, CalendarDays, UserPlus,
-  Users, TrendingUp, Package, LogOut, History, Calculator, Scissors, KeyRound,
+  Users, TrendingUp, Package, LogOut, History, Calculator, Scissors, KeyRound, BarChart3,
 } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { signOut } from '@/actions/auth'
 
 const NAV = [
   { href: '/admin/dashboard', label: 'Inicio', icon: LayoutDashboard },
+  { href: '/admin/dashboard/resumen', label: 'Dashboard', icon: BarChart3 },
   { href: '/admin/dashboard/agenda', label: 'Agenda', icon: CalendarDays },
-  { href: '/admin/dashboard/walk-in', label: 'Ingreso manual', icon: UserPlus },
+  { href: '/admin/dashboard/walk-in', label: 'Agregar cita', icon: UserPlus },
   { href: '/admin/dashboard/clients', label: 'Clientes', icon: Users },
   { href: '/admin/dashboard/historial', label: 'Historial', icon: History },
   { href: '/admin/dashboard/ingresos', label: 'Ingresos', icon: TrendingUp },

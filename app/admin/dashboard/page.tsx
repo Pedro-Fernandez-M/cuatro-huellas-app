@@ -25,7 +25,7 @@ export default async function AdminHomePage() {
         </div>
         <div className="flex gap-2">
           <Link href="/admin/dashboard/walk-in" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-warm text-primary-foreground text-sm font-bold hover:opacity-90 transition-all">
-            <UserPlus className="size-4" /> Ingreso manual
+            <UserPlus className="size-4" /> Agregar cita
           </Link>
           <Link href="/admin/dashboard/agenda" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border text-sm font-semibold hover:bg-secondary/60 transition-all">
             <CalendarDays className="size-4" /> Agenda

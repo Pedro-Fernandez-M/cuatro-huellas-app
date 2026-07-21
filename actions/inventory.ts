@@ -62,7 +62,8 @@ export async function createProduct(
   category: InventoryCategory,
   displayName: string,
   variant?: string,
-  initialStock = 0
+  initialStock = 0,
+  options?: { containerMl?: number | null; dosesPerContainer?: number | null; unit?: string }
 ): Promise<ActionResult> {
   const supabase = await createClient()
   const { error } = await supabase.from('inventory_products').insert({
@@ -70,7 +71,30 @@ export async function createProduct(
     variant: variant ?? null,
     display_name: displayName,
     current_stock: initialStock,
+    container_ml: options?.containerMl ?? null,
+    doses_per_container: options?.dosesPerContainer ?? null,
+    unit: options?.unit ?? (options?.dosesPerContainer ? 'dosis' : 'unidad'),
   })
+  if (error) return { success: false, error: error.message }
+  revalidatePath('/admin/dashboard/inventario')
+  return { success: true }
+}
+
+/** Configura el envase de un producto líquido (ml y dosis que rinde). */
+export async function updateProductDosing(
+  productId: string,
+  containerMl: number | null,
+  dosesPerContainer: number | null
+): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('inventory_products')
+    .update({
+      container_ml: containerMl,
+      doses_per_container: dosesPerContainer,
+      unit: dosesPerContainer ? 'dosis' : 'unidad',
+    })
+    .eq('id', productId)
   if (error) return { success: false, error: error.message }
   revalidatePath('/admin/dashboard/inventario')
   return { success: true }

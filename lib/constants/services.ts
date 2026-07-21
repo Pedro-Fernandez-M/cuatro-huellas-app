@@ -1,13 +1,7 @@
-export type ServiceId = 'bano_mantencion' | 'servicio_completo' | 'bano_comercial' | 'deslanado'
+export type ServiceId = 'servicio_completo' | 'bano_mantencion' | 'bano_comercial' | 'deslanado'
 
+// Orden en que se muestran: Peluquería, Baño mantención, Baño comercial, Deslanado.
 export const SERVICES: { id: ServiceId; label: string; description: string; includes?: string[] }[] = [
-  {
-    id: 'bano_mantencion',
-    label: 'Baño con mantención',
-    description:
-      'Mantiene la higiene y el pelaje en óptimo estado: se retoca la carita, se cepilla el pelaje completo, redondeo de patas y despeje sanitario.',
-    includes: ['Retoque de carita', 'Cepillado completo', 'Redondeo de patas', 'Despeje sanitario'],
-  },
   {
     id: 'servicio_completo',
     label: 'Servicio Completo Peluquería',
@@ -20,6 +14,13 @@ export const SERVICES: { id: ServiceId; label: string; description: string; incl
       'Limpieza de oídos',
       'Despeje de cojinetes',
     ],
+  },
+  {
+    id: 'bano_mantencion',
+    label: 'Baño con mantención',
+    description:
+      'Mantiene la higiene y el pelaje en óptimo estado: se retoca la carita, se cepilla el pelaje completo, redondeo de patas y despeje sanitario.',
+    includes: ['Retoque de carita', 'Cepillado completo', 'Redondeo de patas', 'Despeje sanitario'],
   },
   {
     id: 'bano_comercial',

@@ -102,8 +102,13 @@ export interface InventoryProduct {
   category: InventoryCategory
   variant: string | null
   display_name: string
+  /** Stock actual. Para líquidos se cuenta en DOSIS. */
   current_stock: number
   unit: string
+  /** Contenido del envase en ml (ej. bidón de 5000 ml). Null si no aplica. */
+  container_ml: number | null
+  /** Cuántas dosis rinde un envase. Null si el producto se cuenta por unidad. */
+  doses_per_container: number | null
   created_at: string
 }
 

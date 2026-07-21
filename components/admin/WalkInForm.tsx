@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,7 +9,6 @@ import { SIZES, type SizeCategory } from '@/lib/constants/sizes'
 import { ADDONS, COAT_CONDITIONS, type AddonId, type CoatCondition } from '@/lib/constants/addons'
 import { BREEDS, OTHER_BREED_OPTION } from '@/lib/constants/breeds'
 import { todayInShopTz } from '@/lib/date'
-import { getAvailableSlotsAction } from '@/actions/booking'
 import { createWalkIn } from '@/actions/appointments'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,9 +33,12 @@ export default function WalkInForm({ services }: { services: { id: string; name:
   const [size, setSize] = useState<SizeCategory>(SIZES[0].id)
   const [addons, setAddons] = useState<AddonId[]>([])
   const [coatCondition, setCoatCondition] = useState<CoatCondition | null>(null)
-  const [slots, setSlots] = useState<string[]>([])
-  const [time, setTime] = useState<string | null>(null)
-  const [loadingSlots, setLoadingSlots] = useState(false)
+  const today = todayInShopTz()
+  const [date, setDate] = useState<string>(today)
+  const [time, setTime] = useState<string>(
+    new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit', hour12: false })
+  )
+  const [alreadyHere, setAlreadyHere] = useState(true)
   const [serverError, setServerError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -46,25 +48,13 @@ export default function WalkInForm({ services }: { services: { id: string; name:
   })
   const breedChoice = watch('breedChoice')
 
-  const today = todayInShopTz()
-
-  useEffect(() => {
-    setLoadingSlots(true)
-    setTime(null)
-    getAvailableSlotsAction(today, size).then((s) => {
-      setSlots(s)
-      setTime(s[0] ?? null)
-      setLoadingSlots(false)
-    })
-  }, [size, today])
-
   function toggleAddon(id: AddonId) {
     setAddons((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]))
   }
 
   function onSubmit(data: FormValues) {
-    if (!time) {
-      setServerError('No hay cupo disponible ahora mismo (máximo 3 perros en el local).')
+    if (!date || !time) {
+      setServerError('Ingresa la fecha y la hora.')
       return
     }
     setServerError(null)
@@ -76,13 +66,13 @@ export default function WalkInForm({ services }: { services: { id: string; name:
         sizeCategory: size,
         addons,
         coatCondition,
-        date: today,
+        date,
         time,
         petName: data.petName.trim(),
         petBreed: breed,
         ownerName: data.ownerName.trim(),
         ownerPhone: data.ownerPhone.trim(),
-      })
+      }, alreadyHere)
       if (result.success) {
         setSuccess(true)
         reset()
@@ -101,7 +91,7 @@ export default function WalkInForm({ services }: { services: { id: string; name:
           <Check className="size-8 text-primary" />
         </div>
         <h2 className="text-lg font-bold mb-2">Ingreso registrado</h2>
-        <p className="text-sm text-muted-foreground mb-6">La mascota quedó marcada como &ldquo;en el local&rdquo;.</p>
+        <p className="text-sm text-muted-foreground mb-6">Se agregó a la agenda correctamente.</p>
         <Button variant="outline" onClick={() => setSuccess(false)}>Registrar otro ingreso</Button>
       </div>
     )
@@ -123,25 +113,25 @@ export default function WalkInForm({ services }: { services: { id: string; name:
         </Select>
       </div>
 
-      <div>
-        <Label>Horario de hoy</Label>
-        {loadingSlots ? (
-          <Loader2 className="size-4 animate-spin text-primary" />
-        ) : slots.length === 0 ? (
-          <p className="text-sm text-destructive">No hay cupo disponible ahora mismo.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {slots.map((s) => (
-              <button
-                key={s} type="button" onClick={() => setTime(s)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${time === s ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-secondary hover:border-primary/50'}`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label>Fecha</Label>
+          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
+        <div>
+          <Label>Hora</Label>
+          <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+        </div>
       </div>
+      <p className="text-xs text-muted-foreground -mt-3">
+        Sin restricciones: puedes agendar a cualquier hora aunque el local esté lleno.
+      </p>
+
+      <Checkbox
+        label="La mascota ya está en el local (marcar como en atención)"
+        checked={alreadyHere}
+        onChange={setAlreadyHere}
+      />
 
       <div>
         <Label>Extras (opcional)</Label>
@@ -204,7 +194,7 @@ export default function WalkInForm({ services }: { services: { id: string; name:
       )}
 
       <Button type="submit" disabled={isPending || !time} className="w-full" size="lg">
-        {isPending ? <Loader2 className="size-5 animate-spin" /> : <Check className="size-5" />} Registrar ingreso
+        {isPending ? <Loader2 className="size-5 animate-spin" /> : <Check className="size-5" />} Agregar a la agenda
       </Button>
     </form>
   )

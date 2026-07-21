@@ -96,3 +96,50 @@
   outline: 2px solid oklch(0.42 0.08 245);
   outline-offset: 2px;
 }
+
+/* ─────────────────────────────────────────────────────────
+   Impresión de informes
+───────────────────────────────────────────────────────── */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  /* Oculta menú lateral, botones y todo lo que no sea el informe */
+  aside,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+
+  .print-area {
+    max-width: none !important;
+  }
+
+  /* Evita cortar tablas y secciones a la mitad */
+  section,
+  tr,
+  table {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  a {
+    text-decoration: none;
+    color: #000 !important;
+  }
+}
