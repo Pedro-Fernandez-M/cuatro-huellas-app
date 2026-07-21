@@ -4,6 +4,7 @@ import { serviceLabel } from '@/lib/constants/services'
 import { sizeLabel } from '@/lib/constants/sizes'
 import { todayInShopTz, formatDateLong } from '@/lib/date'
 import { WhatsAppButton } from '@/components/admin/WhatsAppButton'
+import { DayPicker } from '@/components/admin/DayPicker'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,17 +32,9 @@ export default async function RecordatoriosPage({
         Citas de <span className="capitalize font-medium">{formatDateLong(target)}</span>. Envía el recordatorio con un toque.
       </p>
 
-      <form className="flex items-center gap-2 mb-6">
-        <input
-          type="date"
-          name="dia"
-          defaultValue={target}
-          className="h-10 px-3 rounded-xl border border-border bg-input/60 text-sm focus:border-primary outline-none"
-        />
-        <button className="h-10 px-4 rounded-xl border border-border text-sm font-semibold hover:bg-secondary/60 transition-all">
-          Ver día
-        </button>
-      </form>
+      <div className="mb-6">
+        <DayPicker value={target} basePath="/admin/dashboard/recordatorios" />
+      </div>
 
       {appointments.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-2xl">

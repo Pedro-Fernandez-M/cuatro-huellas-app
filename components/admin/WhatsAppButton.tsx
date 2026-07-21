@@ -1,3 +1,5 @@
+'use client'
+
 import { MessageCircle } from 'lucide-react'
 import type { Appointment } from '@/types'
 import { waLink, buildReminderMessage } from '@/lib/whatsapp'

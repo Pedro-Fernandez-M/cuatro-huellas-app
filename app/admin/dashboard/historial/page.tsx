@@ -5,6 +5,7 @@ import { serviceLabel } from '@/lib/constants/services'
 import { sizeLabel } from '@/lib/constants/sizes'
 import { formatDateLong, formatCLP } from '@/lib/date'
 import { Badge } from '@/components/ui/badge'
+import { MonthPicker } from '@/components/admin/DayPicker'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,18 +62,9 @@ export default async function HistorialPage({
       <h1 className="text-2xl font-black tracking-tight mb-1">Historial de visitas</h1>
       <p className="text-sm text-muted-foreground mb-6">Visitas finalizadas del mes (completadas, no presentadas y canceladas). Las que están en atención aparecen en Inicio.</p>
 
-      <form className="mb-8">
-        <input
-          type="month"
-          name="mes"
-          defaultValue={month}
-          max={currentMonth()}
-          className="h-10 px-3 rounded-xl border border-border bg-input/60 text-sm focus:border-primary outline-none mr-2"
-        />
-        <button className="h-10 px-4 rounded-xl gradient-warm text-primary-foreground text-sm font-bold hover:opacity-90 transition-all">
-          Ver mes
-        </button>
-      </form>
+      <div className="mb-8">
+        <MonthPicker value={month} max={currentMonth()} basePath="/admin/dashboard/historial" />
+      </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         {[

@@ -8,6 +8,7 @@ import { sizeLabel } from '@/lib/constants/sizes'
 import { paymentMethodLabel } from '@/lib/constants/finance'
 import { formatCLP, formatDateLong } from '@/lib/date'
 import { PrintButton } from '@/components/admin/PrintButton'
+import { MonthPicker } from '@/components/admin/DayPicker'
 
 export const dynamic = 'force-dynamic'
 
@@ -62,18 +63,7 @@ export default async function InformePage({
         <Link href="/admin/dashboard/resumen" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft className="size-4" /> Volver
         </Link>
-        <form className="flex items-center gap-2">
-          <input
-            type="month"
-            name="mes"
-            defaultValue={month}
-            max={currentMonth()}
-            className="h-10 px-3 rounded-xl border border-border bg-input/60 text-sm focus:border-primary outline-none"
-          />
-          <button className="h-10 px-4 rounded-xl border border-border text-sm font-semibold hover:bg-secondary/60 transition-all">
-            Ver mes
-          </button>
-        </form>
+        <MonthPicker value={month} max={currentMonth()} basePath="/admin/dashboard/informe" />
         <PrintButton />
       </div>
 
