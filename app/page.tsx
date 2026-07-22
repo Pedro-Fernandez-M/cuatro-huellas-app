@@ -123,7 +123,7 @@ export default async function HomePage() {
         </section>
 
         {/* ═══ SERVICIOS ═══ */}
-        <section id="servicios" className="py-20 border-t border-border bg-card/60">
+        <section id="servicios" className="py-20 border-t border-border bg-mint">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3 text-center">Nuestros servicios</h2>
             <p className="text-muted-foreground text-center mb-12">Elige el que necesita tu peludo</p>
@@ -181,19 +181,19 @@ export default async function HomePage() {
         </section>
 
         {/* ═══ CÓMO FUNCIONA ═══ */}
-        <section className="py-20 border-t border-border bg-card/60">
+        <section className="py-20 border-t border-border bg-peach">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-12 text-center">¿Cómo funciona?</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
-                { icon: Scissors, title: 'Elige el servicio', desc: 'Baño con mantención, servicio completo o baño comercial' },
-                { icon: Dog, title: 'Indica el tamaño', desc: 'Pequeña, mediana, grande o extra grande' },
-                { icon: Clock, title: 'Elige tu horario', desc: 'Escoge el día y hora disponible' },
-                { icon: CalendarCheck, title: 'Confirma y listo', desc: 'Solo tus datos y los de tu mascota — sin abono' },
-              ].map(({ icon: Icon, title, desc }) => (
+                { icon: Scissors, title: 'Elige el servicio', desc: 'Baño con mantención, servicio completo o baño comercial', chip: 'chip-mint' },
+                { icon: Dog, title: 'Indica el tamaño', desc: 'Pequeña, mediana, grande o extra grande', chip: 'chip-peach' },
+                { icon: Clock, title: 'Elige tu horario', desc: 'Escoge el día y hora disponible', chip: 'chip-sky' },
+                { icon: CalendarCheck, title: 'Confirma y listo', desc: 'Solo tus datos y los de tu mascota — sin abono', chip: 'chip-rose' },
+              ].map(({ icon: Icon, title, desc, chip }) => (
                 <div key={title} className="text-center sm:text-left">
-                  <div className="p-3 rounded-xl bg-primary/10 inline-flex mb-4">
-                    <Icon className="size-5 text-primary" />
+                  <div className={`p-3 rounded-2xl ${chip} inline-flex mb-4`}>
+                    <Icon className="size-5" />
                   </div>
                   <h3 className="font-bold text-sm mb-2">{title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
@@ -213,7 +213,7 @@ export default async function HomePage() {
         </section>
 
         {/* ═══ GALERÍA (Instagram) ═══ */}
-        <section id="galeria" className="py-20 border-t border-border bg-card/60">
+        <section id="galeria" className="py-20 border-t border-border bg-rose">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="text-center mb-12">
               <p className="text-[10px] tracking-[0.3em] text-primary uppercase font-bold mb-3">— Nuestros peludos</p>
@@ -270,7 +270,7 @@ export default async function HomePage() {
         </section>
 
         {/* ═══ UBICACIÓN ═══ */}
-        <section id="ubicacion" className="py-20 border-t border-border bg-card/60">
+        <section id="ubicacion" className="py-20 border-t border-border bg-sky">
           <div className="max-w-5xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
