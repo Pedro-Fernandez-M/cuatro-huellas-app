@@ -17,12 +17,13 @@ export function addonPrice(id: AddonId): number {
 
 export type CoatCondition = 'mucho_nudo' | 'mal_estado' | 'solamente_sucio' | 'apelmazado'
 
-// Recargo por condición del pelaje. "Mal estado" tiene costo extra; el resto es informativo.
-export const COAT_CONDITIONS: { id: CoatCondition; label: string; price: number }[] = [
-  { id: 'mucho_nudo', label: 'Mucho nudo', price: 0 },
+// Recargo por condición del pelaje. Mucho nudo, mal estado y apelmazado suman $7.000.
+// "Solamente sucio" no tiene costo: está incluido en el servicio.
+export const COAT_CONDITIONS: { id: CoatCondition; label: string; price: number; included?: boolean }[] = [
+  { id: 'mucho_nudo', label: 'Mucho nudo', price: 7000 },
   { id: 'mal_estado', label: 'Pelaje en mal estado', price: 7000 },
-  { id: 'solamente_sucio', label: 'Solamente sucio', price: 0 },
-  { id: 'apelmazado', label: 'Apelmazado', price: 0 },
+  { id: 'solamente_sucio', label: 'Solamente sucio', price: 0, included: true },
+  { id: 'apelmazado', label: 'Apelmazado', price: 7000 },
 ]
 
 export function coatConditionLabel(id: CoatCondition): string {

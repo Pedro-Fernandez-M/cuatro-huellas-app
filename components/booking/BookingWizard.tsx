@@ -366,7 +366,7 @@ export default function BookingWizard({ services, prices }: Props) {
             {COAT_CONDITIONS.map((c) => (
               <Checkbox
                 key={c.id}
-                label={c.price > 0 ? `${c.label} · +${formatCLP(c.price)}` : c.label}
+                label={c.included ? `${c.label} · incluido, sin costo` : c.price > 0 ? `${c.label} · +${formatCLP(c.price)}` : c.label}
                 checked={coatCondition === c.id}
                 onChange={() => setCoatCondition(coatCondition === c.id ? null : c.id)}
               />

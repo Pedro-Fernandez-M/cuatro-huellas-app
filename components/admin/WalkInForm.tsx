@@ -8,7 +8,7 @@ import { Loader2, Check } from 'lucide-react'
 import { SIZES, type SizeCategory } from '@/lib/constants/sizes'
 import { ADDONS, COAT_CONDITIONS, type AddonId, type CoatCondition } from '@/lib/constants/addons'
 import { BREEDS, OTHER_BREED_OPTION } from '@/lib/constants/breeds'
-import { todayInShopTz } from '@/lib/date'
+import { todayInShopTz, formatCLP } from '@/lib/date'
 import { createWalkIn } from '@/actions/appointments'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -146,7 +146,7 @@ export default function WalkInForm({ services }: { services: { id: string; name:
         <Label>Estado del pelaje (opcional)</Label>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {COAT_CONDITIONS.map((c) => (
-            <Checkbox key={c.id} label={c.label} checked={coatCondition === c.id} onChange={() => setCoatCondition(coatCondition === c.id ? null : c.id)} />
+            <Checkbox key={c.id} label={c.included ? `${c.label} · incluido` : c.price > 0 ? `${c.label} · +${formatCLP(c.price)}` : c.label} checked={coatCondition === c.id} onChange={() => setCoatCondition(coatCondition === c.id ? null : c.id)} />
           ))}
         </div>
       </div>

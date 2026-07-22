@@ -432,6 +432,7 @@ insert into services (id, name, description, includes, sort_order) values
 insert into pricing (key, amount) values
   ('size_pequena', 21000), ('size_mediana', 24000), ('size_grande', 35000), ('size_extra_grande', 70000),
   ('addon_lavado_dientes', 4000), ('addon_pintado_unas', 3000), ('addon_retiro_feca', 5000),
-  ('addon_masticable_pulgas', 6500), ('coat_mal_estado', 7000);
+  ('addon_masticable_pulgas', 6500),
+  ('coat_mucho_nudo', 7000), ('coat_mal_estado', 7000), ('coat_apelmazado', 7000);
 
 -- Paso 6 (usuario admin) se hace desde el Dashboard, no por SQL — ver SETUP.md.

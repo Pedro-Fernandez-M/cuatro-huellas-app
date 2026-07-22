@@ -18,7 +18,7 @@ function PricesEditor({ prices }: { prices: PriceMap }) {
   const priceRows: { key: string; label: string }[] = [
     ...SIZES.map((s) => ({ key: `size_${s.id}`, label: `${s.label} (${s.weightRange})` })),
     ...ADDONS.map((a) => ({ key: `addon_${a.id}`, label: a.label + (a.from ? ' (desde)' : '') })),
-    { key: 'coat_mal_estado', label: 'Recargo pelaje en mal estado' },
+    ...COAT_CONDITIONS.filter((c) => !c.included).map((c) => ({ key: `coat_${c.id}`, label: `Pelaje: ${c.label}` })),
   ]
 
   const [values, setValues] = useState<Record<string, string>>(
