@@ -5,6 +5,7 @@ import { sizeLabel } from '@/lib/constants/sizes'
 import { todayInShopTz, formatDateLong } from '@/lib/date'
 import { WhatsAppButton } from '@/components/admin/WhatsAppButton'
 import { DayPicker } from '@/components/admin/DayPicker'
+import { SendAllReminders } from '@/components/admin/SendAllReminders'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +43,8 @@ export default async function RecordatoriosPage({
           <p>No hay citas pendientes para ese día.</p>
         </div>
       ) : (
+        <>
+        <SendAllReminders appointments={appointments} />
         <div className="space-y-2.5 mb-8">
           {appointments.map((a) => (
             <div key={a.id} className="flex items-center justify-between gap-4 p-4 rounded-xl border border-border bg-card flex-wrap">
@@ -63,6 +66,7 @@ export default async function RecordatoriosPage({
             </div>
           ))}
         </div>
+        </>
       )}
 
       <div className="p-4 rounded-xl border border-border bg-secondary/40 text-xs text-muted-foreground flex gap-2.5">
