@@ -137,21 +137,28 @@ function AddExpenseForm({ month, onAdded }: { month: string; onAdded: () => void
   )
 }
 
-export function ExpensesManager({ month, expenses, onChanged }: { month: string; expenses: Expense[]; onChanged: () => void }) {
+export function ExpensesManager({ month, expenses, onChanged, showForm = true }: { month: string; expenses: Expense[]; onChanged: () => void; showForm?: boolean }) {
   const total = expenses.reduce((s, e) => s + (Number(e.amount) || 0), 0)
   return (
     <div>
+      {showForm && (
+        <div className="mb-6">
+          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-2">
+            <Wallet className="size-4" /> Registrar gasto
+          </h2>
+          <AddExpenseForm month={month} onAdded={onChanged} />
+        </div>
+      )}
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-          <Wallet className="size-4" /> Gastos ({expenses.length})
+          <Wallet className="size-4" /> Gastos del mes ({expenses.length})
         </h2>
         <span className="text-sm font-bold text-destructive">−{formatCLP(total)}</span>
       </div>
-      <div className="space-y-2 mb-4">
+      <div className="space-y-2">
         {expenses.length === 0 && <p className="text-sm text-muted-foreground">Sin gastos registrados este mes.</p>}
         {expenses.map((e) => <ExpenseRow key={e.id} expense={e} onChanged={onChanged} />)}
       </div>
-      <AddExpenseForm month={month} onAdded={onChanged} />
     </div>
   )
 }

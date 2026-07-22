@@ -8,7 +8,6 @@ import { getAccountingData, getCashClose } from '@/actions/accounting'
 import { serviceLabel } from '@/lib/constants/services'
 import { paymentMethodLabel } from '@/lib/constants/finance'
 import { formatCLP } from '@/lib/date'
-import { ExpensesManager } from '@/components/admin/ExpensesManager'
 import { Tabs } from '@/components/ui/tabs'
 
 function currentMonth(): string {
@@ -161,7 +160,6 @@ export default function AccountingManager({
         onChange={setTab}
         tabs={[
           { id: 'resumen', label: 'Resumen', icon: PieChart },
-          { id: 'gastos', label: `Gastos (${data.expenses.length})`, icon: TrendingDown },
           { id: 'caja', label: 'Cierre de caja', icon: Calculator },
         ]}
       />
@@ -212,11 +210,6 @@ export default function AccountingManager({
           </div>
         </div>
       </div>
-      )}
-
-      {/* ── Gastos del mes ── */}
-      {tab === 'gastos' && (
-        <ExpensesManager month={month} expenses={data.expenses} onChanged={() => reload(month)} />
       )}
     </div>
   )

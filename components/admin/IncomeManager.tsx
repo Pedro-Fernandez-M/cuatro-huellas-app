@@ -230,6 +230,14 @@ export default function IncomeManager({ initialMonth, initialData }: { initialMo
         </div>
       </div>
 
+      {/* Ingreso de datos arriba */}
+      <div className="mb-8">
+        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-2">Registrar ingreso manual</h2>
+        <p className="text-xs text-muted-foreground mb-3">Ventas de productos u otros ingresos que no vienen de una atención.</p>
+        <AddManualIncomeForm onAdded={() => reload(month)} />
+      </div>
+
+      {/* Detalle abajo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
           <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">Visitas cobradas ({data.appointments.length})</h2>
@@ -243,12 +251,12 @@ export default function IncomeManager({ initialMonth, initialData }: { initialMo
 
         <div>
           <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3">Otros ingresos ({data.manuals.length})</h2>
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2">
+            {data.manuals.length === 0 && <p className="text-sm text-muted-foreground">Sin otros ingresos este mes.</p>}
             {data.manuals.map((mi) => (
               <ManualIncomeRow key={mi.id} income={mi} onChanged={() => reload(month)} />
             ))}
           </div>
-          <AddManualIncomeForm onAdded={() => reload(month)} />
         </div>
       </div>
     </div>

@@ -18,9 +18,13 @@ export default async function IngresosPage() {
   return (
     <div>
       <h1 className="text-2xl font-black tracking-tight mb-1">Ingresos</h1>
-      <p className="text-sm text-muted-foreground mb-8">Visitas cobradas + otros ingresos. Puedes editar, agregar o eliminar registros.</p>
+      <p className="text-sm text-muted-foreground mb-8">Registra un ingreso arriba; abajo ves el detalle y los gráficos.</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+      {/* Ingreso de datos + detalle del mes */}
+      <IncomeManager initialMonth={month} initialData={monthData} />
+
+      {/* Resumen y gráficos abajo */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-12 mb-8">
         <div className="p-6 rounded-2xl border border-border bg-card">
           <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-2">Esta semana</p>
           <p className="text-3xl font-black text-primary mb-1">{formatCLP(summary.weekTotal)}</p>
@@ -38,7 +42,7 @@ export default async function IngresosPage() {
           <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-4 flex items-center gap-2">
             <TrendingUp className="size-4" /> Últimas 8 semanas
           </h2>
-          <div className="flex items-end gap-3 h-40 p-4 rounded-2xl border border-border bg-card mb-10">
+          <div className="flex items-end gap-3 h-40 p-4 rounded-2xl border border-border bg-card">
             {summary.last8Weeks.map((w) => (
               <div key={w.weekStart} className="flex-1 flex flex-col items-center justify-end gap-2 h-full">
                 <div
@@ -52,9 +56,6 @@ export default async function IngresosPage() {
           </div>
         </>
       )}
-
-      <h2 className="text-lg font-bold mb-4">Detalle por mes</h2>
-      <IncomeManager initialMonth={month} initialData={monthData} />
     </div>
   )
 }
