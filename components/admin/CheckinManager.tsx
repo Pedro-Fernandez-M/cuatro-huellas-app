@@ -95,7 +95,7 @@ export default function CheckinManager({ appointment, pet, prices }: { appointme
       <div className="bg-card border border-border rounded-2xl p-5 space-y-2.5 mb-6 text-sm">
         <p className="flex items-center gap-2"><Dog className="size-4 text-primary" /> {appt.pet_breed} · {sizeLabel(appt.size_category)}</p>
         <p className="flex items-center gap-2"><PawPrint className="size-4 text-primary" /> {serviceLabel(appt.service)}</p>
-        <p className="flex items-center gap-2"><Clock className="size-4 text-primary" /> <span className="capitalize">{formatDateLong(appt.appointment_date)}</span> · {appt.start_time.slice(0, 5)}</p>
+        <p className="flex items-center gap-2"><Clock className="size-4 text-primary" /> <span className="first-letter:uppercase">{formatDateLong(appt.appointment_date)}</span> · {appt.start_time.slice(0, 5)}</p>
         <p className="flex items-center gap-2"><User className="size-4 text-primary" /> {appt.owner_name}</p>
         <p className="flex items-center gap-2"><Phone className="size-4 text-primary" /> {appt.owner_phone}</p>
         {appt.addons.length > 0 && (

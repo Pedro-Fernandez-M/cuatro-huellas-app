@@ -4,15 +4,19 @@ import type { Appointment } from '@/types'
 
 /**
  * Normaliza un teléfono chileno a formato internacional para wa.me
- * (solo dígitos, con código país 56). Acepta formatos como
- * "+56 9 1234 5678", "9 1234 5678", "912345678", etc.
+ * (solo dígitos, con código país 56). Acepta "+56 9 1234 5678",
+ * "9 1234 5678", "912345678", con o sin ceros iniciales.
  */
 export function normalizePhoneCL(raw: string): string {
-  const digits = raw.replace(/\D/g, '')
+  const digits = (raw || '').replace(/\D/g, '').replace(/^0+/, '')
   if (digits.startsWith('56')) return digits
   if (digits.length === 9 && digits.startsWith('9')) return '56' + digits
-  if (digits.length === 8) return '569' + digits
-  return digits
+  return '56' + digits
+}
+
+/** Un móvil chileno válido queda como 569 + 8 dígitos (11 en total). */
+export function isValidCLMobile(raw: string): boolean {
+  return /^569\d{8}$/.test(normalizePhoneCL(raw))
 }
 
 /** Enlace wa.me que abre WhatsApp con el mensaje ya escrito. */

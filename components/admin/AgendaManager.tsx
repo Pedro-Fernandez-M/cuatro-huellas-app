@@ -91,7 +91,7 @@ function AppointmentRow({ appt }: { appt: Appointment }) {
     <div className="p-4 rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-xs text-muted-foreground capitalize mb-0.5">{formatDateLong(appt.appointment_date)} · {appt.start_time.slice(0, 5)}</p>
+          <p className="text-xs text-muted-foreground first-letter:uppercase mb-0.5">{formatDateLong(appt.appointment_date)} · {appt.start_time.slice(0, 5)}</p>
           <p className="font-semibold text-sm">{appt.pet_name} <span className="text-muted-foreground font-normal">· {appt.pet_breed}</span></p>
           <p className="text-xs text-muted-foreground">{serviceLabel(appt.service)} · {sizeLabel(appt.size_category)} · {appt.owner_name} · {appt.owner_phone}</p>
         </div>
@@ -200,7 +200,7 @@ export default function AgendaManager({
           {initialBlockedDates.map((b) => (
             <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card text-sm">
               <div>
-                <p className="font-medium capitalize">{formatDateLong(b.blocked_date)}</p>
+                <p className="font-medium first-letter:uppercase">{formatDateLong(b.blocked_date)}</p>
                 {b.reason && <p className="text-xs text-muted-foreground">{b.reason}</p>}
               </div>
               <button

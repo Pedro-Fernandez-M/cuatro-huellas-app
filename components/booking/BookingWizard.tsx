@@ -188,7 +188,7 @@ export default function BookingWizard({ services, prices }: Props) {
           </div>
           <div className="flex items-center gap-3">
             <Calendar className="size-4 text-primary shrink-0" />
-            <span className="text-sm"><span className="text-muted-foreground">Fecha:</span> <strong className="capitalize">{date ? formatDate(date) : ''}</strong></span>
+            <span className="text-sm"><span className="text-muted-foreground">Fecha:</span> <strong className="first-letter:uppercase">{date ? formatDate(date) : ''}</strong></span>
           </div>
           <div className="flex items-center gap-3">
             <Clock className="size-4 text-primary shrink-0" />
@@ -410,7 +410,7 @@ export default function BookingWizard({ services, prices }: Props) {
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="size-3.5 text-primary" />
-              <span className="capitalize">{date ? formatDate(date) : ''}</span>
+              <span className="first-letter:uppercase">{date ? formatDate(date) : ''}</span>
               <span className="mx-1">·</span>
               <Clock className="size-3.5 text-primary" />
               <span>{time}</span>

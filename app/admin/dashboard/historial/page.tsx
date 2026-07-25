@@ -89,7 +89,7 @@ export default async function HistorialPage({
         <div className="space-y-8">
           {Array.from(byDay.entries()).map(([day, appts]) => (
             <div key={day}>
-              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3 capitalize">
+              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-3 first-letter:uppercase">
                 {formatDateLong(day)}
               </h2>
               <div className="space-y-2">

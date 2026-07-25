@@ -10,6 +10,12 @@ export function formatDateLong(dateStr: string): string {
   return new Date(y, m - 1, d).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
+/** Igual pero con solo la primera letra en mayúscula: "Viernes 24 de julio". */
+export function formatDateLongCap(dateStr: string): string {
+  const s = formatDateLong(dateStr)
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
 export function formatCLP(amount: number | null | undefined): string {
   if (amount === null || amount === undefined) return '—'
   return `$${Math.round(amount).toLocaleString('es-CL')}`

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { MessageCircle, Check, ChevronRight, RotateCcw } from 'lucide-react'
 import type { Appointment } from '@/types'
-import { waLink, buildReminderMessage } from '@/lib/whatsapp'
+import { waLink, buildReminderMessage, isValidCLMobile } from '@/lib/whatsapp'
 
 /**
  * Envío guiado de todos los recordatorios del día. Abre WhatsApp de a uno
@@ -11,11 +11,13 @@ import { waLink, buildReminderMessage } from '@/lib/whatsapp'
  * a la vez y en cada chat hay que apretar "enviar" manualmente.
  */
 export function SendAllReminders({ appointments }: { appointments: Appointment[] }) {
-  const items = appointments.map((a) => ({
-    name: a.owner_name,
-    pet: a.pet_name,
-    href: waLink(a.owner_phone, buildReminderMessage(a)),
-  }))
+  const items = appointments
+    .filter((a) => isValidCLMobile(a.owner_phone))
+    .map((a) => ({
+      name: a.owner_name,
+      pet: a.pet_name,
+      href: waLink(a.owner_phone, buildReminderMessage(a)),
+    }))
   const [idx, setIdx] = useState(0)
 
   if (items.length === 0) return null

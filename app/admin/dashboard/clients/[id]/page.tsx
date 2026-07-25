@@ -53,7 +53,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             return (
               <div key={a.id} className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-border bg-card flex-wrap">
                 <div>
-                  <p className="text-sm font-medium capitalize">{formatDateLong(a.appointment_date)} · {a.start_time.slice(0, 5)}</p>
+                  <p className="text-sm font-medium first-letter:uppercase">{formatDateLong(a.appointment_date)} · {a.start_time.slice(0, 5)}</p>
                   <p className="text-xs text-muted-foreground">{a.pet_name} · {serviceLabel(a.service)}</p>
                 </div>
                 <div className="flex items-center gap-3">

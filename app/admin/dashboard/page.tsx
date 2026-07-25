@@ -21,7 +21,7 @@ export default async function AdminHomePage() {
       <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Hoy</h1>
-          <p className="text-sm text-muted-foreground capitalize">{formatDateLong(today)}</p>
+          <p className="text-sm text-muted-foreground first-letter:uppercase">{formatDateLong(today)}</p>
         </div>
         <div className="flex gap-2">
           <Link href="/admin/dashboard/walk-in" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-warm text-primary-foreground text-sm font-bold hover:opacity-90 transition-all">
