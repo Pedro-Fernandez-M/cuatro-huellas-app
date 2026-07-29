@@ -6,9 +6,11 @@ import {
 import { SIZES } from '@/lib/constants/sizes'
 import { formatCLP } from '@/lib/date'
 import { getCatalog } from '@/actions/catalog'
+import { getActiveOffers } from '@/actions/offers'
 import { Logo } from '@/components/Logo'
 import { GalleryImage } from '@/components/GalleryImage'
 import { HeroCollage } from '@/components/HeroCollage'
+import { OfferBanner } from '@/components/OfferBanner'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +33,7 @@ function serviceIcon(id: string) {
 }
 
 export default async function HomePage() {
-  const { services, prices } = await getCatalog()
+  const [{ services, prices }, offers] = await Promise.all([getCatalog(), getActiveOffers()])
   return (
     <div className="flex flex-col min-h-screen">
 
@@ -51,6 +53,9 @@ export default async function HomePage() {
           </Link>
         </div>
       </header>
+
+      {/* ── Banner de ofertas (solo si el admin activó alguna) ── */}
+      <OfferBanner offers={offers} />
 
       <main className="flex-1">
 

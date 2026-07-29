@@ -8,6 +8,14 @@ export type { ServiceId, SizeCategory, AddonId, CoatCondition, PaymentMethod }
 export type AppointmentStatus = 'booked' | 'arrived' | 'completed' | 'cancelled' | 'no_show'
 export type AppointmentSource = 'online' | 'walk_in' | 'manual'
 
+export interface Offer {
+  id: string
+  message: string
+  emoji: string
+  active: boolean
+  created_at: string
+}
+
 export interface Client {
   id: string
   owner_name: string

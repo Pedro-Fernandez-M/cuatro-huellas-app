@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   LayoutDashboard, CalendarDays, UserPlus,
-  Users, TrendingUp, TrendingDown, Package, LogOut, History, Calculator, Scissors, KeyRound, BarChart3, Bell,
+  Users, TrendingUp, TrendingDown, Package, LogOut, History, Calculator, Scissors, KeyRound, BarChart3, Bell, Megaphone,
 } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { signOut } from '@/actions/auth'
@@ -19,6 +19,7 @@ const NAV = [
   { href: '/admin/dashboard/contabilidad', label: 'Contabilidad', icon: Calculator },
   { href: '/admin/dashboard/inventario', label: 'Inventario', icon: Package },
   { href: '/admin/dashboard/servicios', label: 'Servicios', icon: Scissors },
+  { href: '/admin/dashboard/ofertas', label: 'Ofertas', icon: Megaphone },
   { href: '/admin/dashboard/cuenta', label: 'Mi cuenta', icon: KeyRound },
 ]
 
