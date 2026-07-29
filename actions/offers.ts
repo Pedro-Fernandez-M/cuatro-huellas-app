@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { todayInShopTz } from '@/lib/date'
 import type { Offer } from '@/types'
 
 interface ActionResult {
@@ -15,14 +16,16 @@ function revalidateOffers() {
   revalidatePath('/admin/dashboard/ofertas')
 }
 
-/** Ofertas activas para mostrar en la web pública. Silenciosa si la tabla aún no existe. */
+/** Ofertas activas y no vencidas para mostrar en la web pública. Silenciosa si la tabla aún no existe. */
 export async function getActiveOffers(): Promise<Offer[]> {
   try {
     const supabase = await createClient()
+    const today = todayInShopTz()
     const { data, error } = await supabase
       .from('offers')
       .select('*')
       .eq('active', true)
+      .or(`expires_at.is.null,expires_at.gte.${today}`)
       .order('created_at', { ascending: false })
     if (error || !data) return []
     return data as Offer[]
@@ -46,13 +49,14 @@ export async function getAllOffers(): Promise<Offer[]> {
   }
 }
 
-export async function addOffer(input: { message: string; emoji?: string }): Promise<ActionResult> {
+export async function addOffer(input: { message: string; emoji?: string; expires_at?: string | null }): Promise<ActionResult> {
   if (!input.message.trim()) return { success: false, error: 'Escribe el mensaje de la oferta.' }
   const supabase = await createClient()
   const { error } = await supabase.from('offers').insert({
     message: input.message.trim(),
     emoji: input.emoji?.trim() || '🎉',
     active: false,
+    expires_at: input.expires_at || null,
   })
   if (error) return { success: false, error: error.message }
   revalidateOffers()
@@ -61,7 +65,7 @@ export async function addOffer(input: { message: string; emoji?: string }): Prom
 
 export async function updateOffer(
   id: string,
-  fields: { message?: string; emoji?: string; active?: boolean },
+  fields: { message?: string; emoji?: string; active?: boolean; expires_at?: string | null },
 ): Promise<ActionResult> {
   const supabase = await createClient()
   const { error } = await supabase.from('offers').update(fields).eq('id', id)

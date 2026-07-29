@@ -2,12 +2,18 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Pencil, Trash2, Loader2, Check, Megaphone } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, Check, Megaphone, CalendarClock } from 'lucide-react'
 import type { Offer } from '@/types'
 import { addOffer, updateOffer, deleteOffer } from '@/actions/offers'
+import { formatDateLong, todayInShopTz } from '@/lib/date'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+
+/** true si la oferta tiene fecha de vencimiento ya pasada. */
+function isExpired(expiresAt: string | null): boolean {
+  return !!expiresAt && expiresAt < todayInShopTz()
+}
 
 const EMOJI_CHOICES = ['🎉', '🎲', '🐾', '🎁', '💥', '⭐', '🔥', '💙', '✂️', '🛁']
 
@@ -30,14 +36,17 @@ function OfferRow({ offer }: { offer: Offer }) {
   const [editing, setEditing] = useState(false)
   const [message, setMessage] = useState(offer.message)
   const [emoji, setEmoji] = useState(offer.emoji)
+  const [expiresAt, setExpiresAt] = useState(offer.expires_at ?? '')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
 
+  const expired = isExpired(offer.expires_at)
+
   function save() {
     if (!message.trim()) return
     startTransition(async () => {
-      await updateOffer(offer.id, { message: message.trim(), emoji: emoji || '🎉' })
+      await updateOffer(offer.id, { message: message.trim(), emoji: emoji || '🎉', expires_at: expiresAt || null })
       setEditing(false)
       router.refresh()
     })
@@ -65,9 +74,20 @@ function OfferRow({ offer }: { offer: Offer }) {
             <span className="text-2xl leading-none">{offer.emoji}</span>
             <div className="min-w-0">
               <p className="font-semibold text-sm">{offer.message}</p>
-              <p className={`text-[11px] font-medium mt-1 ${offer.active ? 'text-primary' : 'text-muted-foreground'}`}>
-                {offer.active ? '● Visible en la web' : '○ Oculta'}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                {offer.active && expired ? (
+                  <span className="text-[11px] font-medium text-destructive">● Vencida (no se muestra)</span>
+                ) : (
+                  <span className={`text-[11px] font-medium ${offer.active ? 'text-primary' : 'text-muted-foreground'}`}>
+                    {offer.active ? '● Visible en la web' : '○ Oculta'}
+                  </span>
+                )}
+                {offer.expires_at && (
+                  <span className={`inline-flex items-center gap-1 text-[11px] ${expired ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    <CalendarClock className="size-3" /> Vence {formatDateLong(offer.expires_at)}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -106,11 +126,27 @@ function OfferRow({ offer }: { offer: Offer }) {
               className="w-full px-3 py-2 rounded-lg border border-border bg-input/60 text-sm focus:border-primary outline-none resize-none"
             />
           </div>
+          <div>
+            <Label className="text-xs mb-1.5">Vence el (opcional)</Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={expiresAt}
+                min={todayInShopTz()}
+                onChange={(e) => setExpiresAt(e.target.value)}
+                className="h-9 px-3 rounded-lg border border-border bg-input/60 text-sm focus:border-primary outline-none"
+              />
+              {expiresAt && (
+                <button onClick={() => setExpiresAt('')} className="text-xs text-muted-foreground hover:text-destructive transition-colors">Quitar fecha</button>
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">Déjalo vacío para que la oferta no venza. Se ocultará sola el día después de esta fecha.</p>
+          </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={save} disabled={isPending}>
               {isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} Guardar
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setMessage(offer.message); setEmoji(offer.emoji) }}>Cancelar</Button>
+            <Button size="sm" variant="ghost" onClick={() => { setEditing(false); setMessage(offer.message); setEmoji(offer.emoji); setExpiresAt(offer.expires_at ?? '') }}>Cancelar</Button>
           </div>
         </div>
       )}
@@ -131,6 +167,7 @@ function OfferRow({ offer }: { offer: Offer }) {
 function AddOfferForm() {
   const [message, setMessage] = useState('')
   const [emoji, setEmoji] = useState('🎉')
+  const [expiresAt, setExpiresAt] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
@@ -139,8 +176,8 @@ function AddOfferForm() {
     if (!message.trim()) { setError('Escribe el mensaje'); return }
     setError(null)
     startTransition(async () => {
-      const r = await addOffer({ message, emoji })
-      if (r.success) { setMessage(''); setEmoji('🎉'); router.refresh() }
+      const r = await addOffer({ message, emoji, expires_at: expiresAt || null })
+      if (r.success) { setMessage(''); setEmoji('🎉'); setExpiresAt(''); router.refresh() }
       else setError(r.error ?? 'Error')
     })
   }
@@ -170,6 +207,22 @@ function AddOfferForm() {
           placeholder="Ej: ¡Ven a tirar los dados por tu descuento!"
           className="h-9 text-sm"
         />
+      </div>
+      <div>
+        <Label className="text-xs mb-1.5">Vence el (opcional)</Label>
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={expiresAt}
+            min={todayInShopTz()}
+            onChange={(e) => setExpiresAt(e.target.value)}
+            className="h-9 px-3 rounded-lg border border-border bg-input/60 text-sm focus:border-primary outline-none"
+          />
+          {expiresAt && (
+            <button onClick={() => setExpiresAt('')} className="text-xs text-muted-foreground hover:text-destructive transition-colors">Quitar</button>
+          )}
+        </div>
+        <p className="text-[11px] text-muted-foreground mt-1">Vacío = no vence. Se ocultará sola el día después de esta fecha.</p>
       </div>
       {error && <p className="text-xs text-destructive">{error}</p>}
       <Button size="sm" onClick={submit} disabled={isPending}>

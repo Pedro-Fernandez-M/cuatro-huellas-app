@@ -13,6 +13,7 @@ export interface Offer {
   message: string
   emoji: string
   active: boolean
+  expires_at: string | null
   created_at: string
 }
 
