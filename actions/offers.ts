@@ -21,14 +21,24 @@ export async function getActiveOffers(): Promise<Offer[]> {
   try {
     const supabase = await createClient()
     const today = todayInShopTz()
-    const { data, error } = await supabase
+
+    // Intento con filtro de vencimiento en la BD (requiere la columna expires_at, migración 11).
+    const withExpiry = await supabase
       .from('offers')
       .select('*')
       .eq('active', true)
       .or(`expires_at.is.null,expires_at.gte.${today}`)
       .order('created_at', { ascending: false })
-    if (error || !data) return []
-    return data as Offer[]
+    if (!withExpiry.error && withExpiry.data) return withExpiry.data as Offer[]
+
+    // Fallback si la columna aún no existe: traigo solo las activas y filtro el vencimiento aquí.
+    const basic = await supabase
+      .from('offers')
+      .select('*')
+      .eq('active', true)
+      .order('created_at', { ascending: false })
+    if (basic.error || !basic.data) return []
+    return (basic.data as Offer[]).filter((o) => !o.expires_at || o.expires_at >= today)
   } catch {
     return []
   }
