@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import {
   Scissors, Droplets, Sparkles, Layers, Clock, ShieldCheck, Check,
-  CalendarCheck, ChevronRight, MapPin, Dog, Heart, PawPrint,
+  CalendarCheck, ChevronRight, MapPin, Dog, Heart,
 } from 'lucide-react'
 import { SIZES } from '@/lib/constants/sizes'
 import { formatCLP } from '@/lib/date'
 import { getCatalog } from '@/actions/catalog'
 import { Logo } from '@/components/Logo'
 import { GalleryImage } from '@/components/GalleryImage'
+import { HeroCollage } from '@/components/HeroCollage'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,29 +54,35 @@ export default async function HomePage() {
 
       <main className="flex-1">
 
-        {/* ═══ HERO ═══ */}
-        <section className="relative overflow-hidden py-16 sm:py-24">
-          {/* Blobs de color cálidos */}
-          <div
-            className="absolute -top-24 -right-24 w-[460px] h-[460px] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, oklch(0.82 0.08 165 / 0.45), transparent 70%)' }}
-          />
-          <div
-            className="absolute -bottom-32 -left-24 w-[420px] h-[420px] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, oklch(0.72 0.13 68 / 0.28), transparent 70%)' }}
-          />
-          {/* Huellas decorativas */}
-          <PawPrint className="hidden sm:block absolute top-16 left-10 size-8 text-primary/10 -rotate-12" />
-          <PawPrint className="hidden sm:block absolute bottom-20 right-16 size-10 text-primary/10 rotate-12" />
+        {/* ═══ HERO — collage de fotos en movimiento de fondo ═══ */}
+        <section className="relative overflow-hidden min-h-[88vh] flex items-center">
+          {/* Collage animado de fondo */}
+          <HeroCollage />
 
-          <div className="relative max-w-5xl mx-auto px-4 sm:px-6 grid lg:grid-cols-2 gap-12 items-center">
-            {/* Texto */}
-            <div className="text-center lg:text-left">
+          {/* Velo claro plano — mantiene las fotos visibles pero legible el texto */}
+          <div className="absolute inset-0 bg-background/45 pointer-events-none" />
+          {/* Velo direccional (desktop): más fuerte al costado del texto, limpio a la derecha */}
+          <div
+            className="absolute inset-0 pointer-events-none hidden lg:block"
+            style={{
+              background:
+                'linear-gradient(100deg, oklch(0.98 0.01 180 / 0.94) 0%, oklch(0.98 0.01 180 / 0.86) 32%, oklch(0.98 0.01 180 / 0.35) 62%, oklch(0.98 0.01 180 / 0) 100%)',
+            }}
+          />
+          {/* Desvanecido inferior para fundir con la siguiente sección */}
+          <div
+            className="absolute inset-x-0 bottom-0 h-40 pointer-events-none"
+            style={{ background: 'linear-gradient(to bottom, transparent, var(--background))' }}
+          />
+
+          {/* Contenido */}
+          <div className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 py-16">
+            <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left rounded-3xl bg-background/70 lg:bg-transparent backdrop-blur-sm lg:backdrop-blur-none p-6 sm:p-8 lg:p-0 shadow-lg lg:shadow-none">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-bold mb-6 uppercase tracking-wider">
                 <Heart className="size-3.5 fill-primary" />
                 Cuidamos a tu peludo con cariño
               </div>
-              <h1 className="text-[clamp(2.3rem,6vw,4rem)] font-black tracking-tight leading-[1.05] mb-5">
+              <h1 className="text-[clamp(2.3rem,6vw,4.2rem)] font-black tracking-tight leading-[1.05] mb-5">
                 Tu mascota,<br />
                 <span className="text-gradient-warm">feliz y regalona</span> 🐶
               </h1>
@@ -95,28 +102,11 @@ export default async function HomePage() {
                   href={INSTAGRAM_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl border border-border text-foreground font-semibold text-base hover:bg-secondary/60 transition-all"
+                  className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl border border-border bg-card/80 text-foreground font-semibold text-base hover:bg-secondary/60 transition-all"
                 >
                   <IgIcon className="size-5" />
                   Ver Instagram
                 </a>
-              </div>
-            </div>
-
-            {/* Collage de fotos */}
-            <div className="relative h-[340px] sm:h-[400px] hidden lg:block">
-              <div className="absolute top-0 right-4 w-52 h-64 rounded-3xl overflow-hidden border-4 border-card shadow-xl rotate-3">
-                <GalleryImage src="/galeria/1.jpg" alt="Perrito recién bañado en Cuatro Huellas" className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute bottom-2 left-0 w-44 h-56 rounded-3xl overflow-hidden border-4 border-card shadow-xl -rotate-6">
-                <GalleryImage src="/galeria/2.jpg" alt="Perro peluqueado en Cuatro Huellas" className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute bottom-16 right-0 w-36 h-36 rounded-3xl overflow-hidden border-4 border-card shadow-xl rotate-6">
-                <GalleryImage src="/galeria/3.jpg" alt="Mascota feliz en Cuatro Huellas" className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute top-24 -left-2 bg-card rounded-2xl shadow-lg border border-border px-4 py-3 -rotate-3">
-                <p className="text-xs font-bold flex items-center gap-1.5"><PawPrint className="size-4 text-primary" /> +cientos de peludos</p>
-                <p className="text-[11px] text-muted-foreground">felices y regalones</p>
               </div>
             </div>
           </div>
@@ -219,6 +209,25 @@ export default async function HomePage() {
               <p className="text-[10px] tracking-[0.3em] text-primary uppercase font-bold mb-3">— Nuestros peludos</p>
               <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">Galería 🐾</h2>
               <p className="text-muted-foreground">Algunos de los engreídos que pasaron por el local</p>
+            </div>
+
+            {/* Video destacado */}
+            <div className="flex justify-center mb-10">
+              <div className="relative w-full max-w-[300px] aspect-[9/16] rounded-3xl overflow-hidden border-4 border-card shadow-xl">
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="absolute inset-0 w-full h-full object-cover"
+                >
+                  <source src="/collage/fiesta.mp4" type="video/mp4" />
+                </video>
+                <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                <p className="absolute bottom-3 left-4 text-white text-sm font-bold drop-shadow flex items-center gap-1.5">
+                  <Heart className="size-4 fill-white" /> Un día de fiesta 🎉
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-10">

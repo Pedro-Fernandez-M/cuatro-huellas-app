@@ -105,6 +105,22 @@
 }
 .animate-fade-in { animation: fade-in 0.35s ease-out; }
 
+/* ─────────────────────────────────────────────────────────
+   Collage del hero — columnas de fotos en desplazamiento continuo
+───────────────────────────────────────────────────────── */
+@keyframes collage-scroll {
+  to { transform: translateY(-50%); }
+}
+.collage-track {
+  animation-name: collage-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .collage-track { animation: none; }
+}
+
 :focus-visible {
   outline: 2px solid oklch(0.42 0.08 245);
   outline-offset: 2px;
