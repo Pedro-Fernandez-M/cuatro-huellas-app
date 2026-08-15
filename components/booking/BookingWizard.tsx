@@ -223,8 +223,8 @@ export default function BookingWizard({ services, prices }: Props) {
       {/* Paso 1: Servicio */}
       {step === 'service' && (
         <div>
-          <h2 className="text-xl font-bold mb-1">¿Qué servicio necesita tu peludo?</h2>
-          <p className="text-sm text-muted-foreground mb-6">Elige un servicio</p>
+          <h2 className="text-2xl font-black mb-1">¿Qué servicio necesita tu peludo?</h2>
+          <p className="text-base text-muted-foreground mb-6">Elige un servicio</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {services.map((s) => {
               const Icon = serviceIcon(s.id)
@@ -232,13 +232,13 @@ export default function BookingWizard({ services, prices }: Props) {
                 <button
                   key={s.id}
                   onClick={() => selectService(s.id)}
-                  className="text-left p-5 rounded-xl border border-border bg-card hover:border-primary/60 transition-all"
+                  className="text-left p-5 rounded-2xl border-2 border-border bg-card hover:border-primary/60 active:border-primary transition-all"
                 >
-                  <div className="p-2.5 rounded-lg bg-primary/10 inline-flex mb-4">
-                    <Icon className="size-4 text-primary" />
+                  <div className="p-3 rounded-xl bg-primary/10 inline-flex mb-4">
+                    <Icon className="size-6 text-primary" />
                   </div>
-                  <p className="font-semibold text-sm mb-1">{s.name}</p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{s.description}</p>
+                  <p className="font-black text-lg mb-1 leading-tight">{s.name}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{s.description}</p>
                 </button>
               )
             })}
@@ -249,24 +249,24 @@ export default function BookingWizard({ services, prices }: Props) {
       {/* Paso 2: Tamaño */}
       {step === 'size' && (
         <div>
-          <button onClick={() => setStep('service')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
-            <ChevronLeft className="size-4" /> Volver
+          <button onClick={() => setStep('service')} className="flex items-center gap-1 text-base text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <ChevronLeft className="size-5" /> Volver
           </button>
-          <h2 className="text-xl font-bold mb-1">¿Qué tamaño tiene tu perro?</h2>
-          <p className="text-sm text-muted-foreground mb-6">Perros grandes y extra grandes solo se agendan durante la mañana</p>
+          <h2 className="text-2xl font-black mb-1">¿Qué tamaño tiene tu perro?</h2>
+          <p className="text-base text-muted-foreground mb-6">Perros grandes y extra grandes solo se agendan durante la mañana</p>
           <div className="grid grid-cols-2 gap-4">
             {SIZES.map((s) => (
               <button
                 key={s.id}
                 onClick={() => selectSize(s.id)}
-                className="text-center p-5 rounded-xl border border-border bg-card hover:border-primary/60 transition-all"
+                className="text-center p-5 rounded-2xl border-2 border-border bg-card hover:border-primary/60 active:border-primary transition-all"
               >
-                <Dog className="size-6 text-primary mx-auto mb-3" />
-                <p className="font-semibold text-sm mb-1">{s.label}</p>
-                <p className="text-xs text-muted-foreground">{s.weightRange}</p>
-                <p className="text-sm font-bold text-primary mt-2">{formatCLP(s.price)}</p>
+                <Dog className="size-8 text-primary mx-auto mb-3" />
+                <p className="font-black text-lg mb-1">{s.label}</p>
+                <p className="text-sm text-muted-foreground">{s.weightRange}</p>
+                <p className="text-lg font-black text-primary mt-2">{formatCLP(s.price)}</p>
                 {isMorningOnly(s.id) && (
-                  <p className="text-[10px] text-primary mt-1 font-semibold uppercase tracking-wide">Solo en la mañana</p>
+                  <p className="text-xs text-primary mt-1 font-bold uppercase tracking-wide">Solo en la mañana</p>
                 )}
               </button>
             ))}
@@ -277,7 +277,7 @@ export default function BookingWizard({ services, prices }: Props) {
       {/* Paso 3: Fecha y hora */}
       {step === 'datetime' && (
         <div>
-          <button onClick={() => setStep('size')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+          <button onClick={() => setStep('size')} className="flex items-center gap-1 text-base text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ChevronLeft className="size-4" /> Volver
           </button>
           <div className="flex items-center gap-2 flex-wrap mb-5 text-sm text-muted-foreground">
@@ -288,8 +288,8 @@ export default function BookingWizard({ services, prices }: Props) {
               <Dog className="size-3.5 text-primary" /> {selectedSizeObj?.label}
             </span>
           </div>
-          <h2 className="text-xl font-bold mb-1">¿Cuándo te gustaría venir?</h2>
-          <p className="text-sm text-muted-foreground mb-6">
+          <h2 className="text-2xl font-black mb-1">¿Cuándo te gustaría venir?</h2>
+          <p className="text-base text-muted-foreground mb-6">
             {size && isMorningOnly(size)
               ? 'Perros de este tamaño solo se agendan durante la mañana'
               : 'Elige fecha y horario disponible'}
@@ -297,11 +297,11 @@ export default function BookingWizard({ services, prices }: Props) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <p className="text-sm font-medium mb-3 text-muted-foreground">Selecciona una fecha</p>
+              <p className="text-base font-semibold mb-3">Selecciona una fecha</p>
               <MiniCalendar blockedDates={blockedDates} selected={date} onSelect={selectDate} />
             </div>
             <div>
-              <p className="text-sm font-medium mb-3 text-muted-foreground">
+              <p className="text-base font-semibold mb-3">
                 {date ? `Horarios para ${formatDate(date)}` : 'Primero elige una fecha'}
               </p>
               {loadingSlots && (
@@ -315,12 +315,12 @@ export default function BookingWizard({ services, prices }: Props) {
                 </div>
               )}
               {!loadingSlots && slots.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2.5">
                   {slots.map((slot) => (
                     <button
                       key={slot}
                       onClick={() => setTime(slot)}
-                      className={`py-2.5 rounded-lg text-sm font-medium border transition-all ${time === slot ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-secondary hover:border-primary/50'}`}
+                      className={`py-3.5 rounded-xl text-lg font-bold border-2 transition-all ${time === slot ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-secondary hover:border-primary/50'}`}
                     >
                       {slot}
                     </button>
@@ -332,8 +332,8 @@ export default function BookingWizard({ services, prices }: Props) {
 
           {date && time && (
             <div className="mt-8 flex justify-end">
-              <Button onClick={() => setStep('extras')}>
-                Continuar <ChevronRight className="size-4" />
+              <Button size="lg" onClick={() => setStep('extras')}>
+                Continuar <ChevronRight className="size-5" />
               </Button>
             </div>
           )}
@@ -343,13 +343,13 @@ export default function BookingWizard({ services, prices }: Props) {
       {/* Paso 4: Extras (opcional) */}
       {step === 'extras' && (
         <div>
-          <button onClick={() => setStep('datetime')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+          <button onClick={() => setStep('datetime')} className="flex items-center gap-1 text-base text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ChevronLeft className="size-4" /> Volver
           </button>
-          <h2 className="text-xl font-bold mb-1">¿Algo extra? (opcional)</h2>
-          <p className="text-sm text-muted-foreground mb-6">Puedes dejar esto en blanco si no aplica</p>
+          <h2 className="text-2xl font-black mb-1">¿Algo extra? (opcional)</h2>
+          <p className="text-base text-muted-foreground mb-6">Puedes dejar esto en blanco si no aplica</p>
 
-          <p className="text-sm font-medium mb-3">Servicios adicionales</p>
+          <p className="text-lg font-bold mb-3">Servicios adicionales</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
             {ADDONS.map((a) => (
               <Checkbox
@@ -361,7 +361,7 @@ export default function BookingWizard({ services, prices }: Props) {
             ))}
           </div>
 
-          <p className="text-sm font-medium mb-3">Estado del pelaje</p>
+          <p className="text-lg font-bold mb-3">Estado del pelaje</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
             {COAT_CONDITIONS.map((c) => (
               <Checkbox
@@ -374,20 +374,20 @@ export default function BookingWizard({ services, prices }: Props) {
           </div>
 
           {size && (
-            <div className="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
-              <span className="text-sm font-medium">Valor estimado</span>
-              <span className="text-lg font-black text-primary">
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/5 border-2 border-primary/20 mb-6">
+              <span className="text-base font-bold">Valor estimado</span>
+              <span className="text-2xl font-black text-primary">
                 {formatCLP(estimateTotal({ sizeCategory: size, addons, coatCondition }, prices))}
               </span>
             </div>
           )}
-          <p className="text-xs text-muted-foreground mb-6 text-center">
+          <p className="text-sm text-muted-foreground mb-6 text-center">
             Valor referencial. El precio final se confirma en el local según el estado de tu mascota.
           </p>
 
           <div className="flex justify-end">
-            <Button onClick={() => setStep('details')}>
-              Continuar <ChevronRight className="size-4" />
+            <Button size="lg" onClick={() => setStep('details')}>
+              Continuar <ChevronRight className="size-5" />
             </Button>
           </div>
         </div>
@@ -396,11 +396,11 @@ export default function BookingWizard({ services, prices }: Props) {
       {/* Paso 5: Datos */}
       {step === 'details' && (
         <div>
-          <button onClick={() => setStep('extras')} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+          <button onClick={() => setStep('extras')} className="flex items-center gap-1 text-base text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ChevronLeft className="size-4" /> Volver
           </button>
-          <h2 className="text-xl font-bold mb-1">Datos de tu mascota y tuyos</h2>
-          <p className="text-sm text-muted-foreground mb-6">Sin abono — solo confirmamos tu hora</p>
+          <h2 className="text-2xl font-black mb-1">Datos de tu mascota y tuyos</h2>
+          <p className="text-base text-muted-foreground mb-6">Sin abono — solo confirmamos tu hora</p>
 
           <div className="bg-card border border-border rounded-xl p-4 mb-6 text-sm space-y-1.5">
             <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
@@ -425,39 +425,39 @@ export default function BookingWizard({ services, prices }: Props) {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <Label><PawPrint className="size-3.5 inline mr-1.5 text-primary" />Nombre de tu mascota</Label>
+              <Label className="text-base"><PawPrint className="size-3.5 inline mr-1.5 text-primary" />Nombre de tu mascota</Label>
               <Input {...register('petName')} placeholder="Ej: Firulais" />
-              {errors.petName && <p className="text-destructive text-xs mt-1.5">{errors.petName.message}</p>}
+              {errors.petName && <p className="text-destructive text-sm mt-1.5 font-medium">{errors.petName.message}</p>}
             </div>
 
             <div>
-              <Label><Dog className="size-3.5 inline mr-1.5 text-primary" />Raza</Label>
+              <Label className="text-base"><Dog className="size-3.5 inline mr-1.5 text-primary" />Raza</Label>
               <Select {...register('breedChoice')} defaultValue="">
                 <option value="" disabled>Selecciona una raza</option>
                 {BREEDS.map((b) => <option key={b} value={b}>{b}</option>)}
                 <option value={OTHER_BREED_OPTION}>{OTHER_BREED_OPTION}</option>
               </Select>
-              {errors.breedChoice && <p className="text-destructive text-xs mt-1.5">{errors.breedChoice.message}</p>}
+              {errors.breedChoice && <p className="text-destructive text-sm mt-1.5 font-medium">{errors.breedChoice.message}</p>}
             </div>
 
             {breedChoice === OTHER_BREED_OPTION && (
               <div>
-                <Label>Especifica la raza</Label>
+                <Label className="text-base">Especifica la raza</Label>
                 <Input {...register('breedOther')} placeholder="Ej: Mestizo" />
-                {errors.breedOther && <p className="text-destructive text-xs mt-1.5">{errors.breedOther.message}</p>}
+                {errors.breedOther && <p className="text-destructive text-sm mt-1.5 font-medium">{errors.breedOther.message}</p>}
               </div>
             )}
 
             <div>
-              <Label><User className="size-3.5 inline mr-1.5 text-primary" />Tu nombre completo</Label>
+              <Label className="text-base"><User className="size-3.5 inline mr-1.5 text-primary" />Tu nombre completo</Label>
               <Input {...register('ownerName')} placeholder="Ej: María González" />
-              {errors.ownerName && <p className="text-destructive text-xs mt-1.5">{errors.ownerName.message}</p>}
+              {errors.ownerName && <p className="text-destructive text-sm mt-1.5 font-medium">{errors.ownerName.message}</p>}
             </div>
 
             <div>
-              <Label><Phone className="size-3.5 inline mr-1.5 text-primary" />Tu teléfono</Label>
+              <Label className="text-base"><Phone className="size-3.5 inline mr-1.5 text-primary" />Tu teléfono</Label>
               <Input {...register('ownerPhone')} type="tel" placeholder="Ej: +56 9 1234 5678" />
-              {errors.ownerPhone && <p className="text-destructive text-xs mt-1.5">{errors.ownerPhone.message}</p>}
+              {errors.ownerPhone && <p className="text-destructive text-sm mt-1.5 font-medium">{errors.ownerPhone.message}</p>}
             </div>
 
             {serverError && (

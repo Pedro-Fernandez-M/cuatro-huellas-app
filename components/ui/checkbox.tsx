@@ -17,20 +17,20 @@ export function Checkbox({ checked, onChange, label, className }: CheckboxProps)
       type="button"
       onClick={() => onChange(!checked)}
       className={cn(
-        'flex items-center gap-2.5 text-left p-3 rounded-xl border transition-all w-full',
+        'flex items-center gap-3 text-left p-3.5 rounded-xl border transition-all w-full',
         checked ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40',
         className
       )}
     >
       <span
         className={cn(
-          'size-5 rounded-md border flex items-center justify-center shrink-0 transition-colors',
+          'size-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors',
           checked ? 'bg-primary border-primary text-primary-foreground' : 'border-border'
         )}
       >
-        {checked && <Check className="size-3.5" />}
+        {checked && <Check className="size-4" />}
       </span>
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-base font-semibold leading-snug">{label}</span>
     </button>
   )
 }
