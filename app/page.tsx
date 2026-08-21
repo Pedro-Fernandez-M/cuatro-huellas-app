@@ -32,10 +32,34 @@ function serviceIcon(id: string) {
   return SERVICE_ICONS[id] ?? Scissors
 }
 
+const LOCAL_BUSINESS_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': ['PetGroomer', 'LocalBusiness'],
+  name: 'Cuatro Huellas — Peluquería Canina',
+  image: 'https://cuatrohuellas.cl/logo.jpg',
+  url: 'https://cuatrohuellas.cl',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Rubén Darío 146',
+    addressLocality: 'Valdivia',
+    addressRegion: 'Los Ríos',
+    addressCountry: 'CL',
+  },
+  geo: { '@type': 'GeoCoordinates', latitude: -39.838373, longitude: -73.2105635 },
+  areaServed: 'Valdivia',
+  priceRange: '$$',
+  sameAs: ['https://www.instagram.com/cuatro.huellas.valdivia/'],
+  openingHoursSpecification: [
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '09:30', closes: '15:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Saturday', opens: '09:30', closes: '13:00' },
+  ],
+}
+
 export default async function HomePage() {
   const [{ services, prices }, offers] = await Promise.all([getCatalog(), getActiveOffers()])
   return (
     <div className="flex flex-col min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LOCAL_BUSINESS_JSONLD) }} />
 
       {/* ── Navbar ── */}
       <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
