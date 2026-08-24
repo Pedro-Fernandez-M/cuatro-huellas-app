@@ -1,8 +1,11 @@
 'use server'
 
+import { after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAvailableSlots } from '@/lib/scheduling/availability'
 import { durationForSize } from '@/lib/constants/sizes'
+import { formatDateLongCap } from '@/lib/date'
+import { sendPushToStaff } from '@/lib/push'
 import type { BookingInput, Appointment } from '@/types'
 
 export async function getAvailableSlotsAction(date: string, size: BookingInput['sizeCategory']) {
@@ -65,6 +68,23 @@ export async function createBooking(input: BookingInput): Promise<CreateBookingR
     }
 
     const appointment = data as Appointment
+
+    // El aviso al staff sale DESPUÉS de responderle al cliente: con `after` la
+    // reserva se confirma al instante aunque el servicio de push esté lento, y
+    // si el envío falla la reserva ya quedó guardada igual.
+    after(async () => {
+      try {
+        await sendPushToStaff({
+          title: 'Nueva reserva online',
+          body: `${input.petName.trim()} — ${formatDateLongCap(input.date)} a las ${input.time}`,
+          url: '/admin/dashboard/agenda',
+          tag: `cita-${appointment.id}`,
+        })
+      } catch (err) {
+        console.error('[booking] no se pudo notificar al staff', err)
+      }
+    })
+
     return { success: true, appointmentId: appointment.id }
   } catch {
     return { success: false, error: 'No se pudo conectar con Supabase. Revisa la configuración del proyecto en Vercel.' }
