@@ -21,6 +21,10 @@ function urlBase64ToUint8Array(base64String: string) {
   return output
 }
 
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)
+}
+
 /** Nombre por defecto para el dispositivo, deducido del navegador. */
 function guessDeviceName() {
   const ua = navigator.userAgent
@@ -52,6 +56,42 @@ async function registerServiceWorker(): Promise<string | null> {
   }
 }
 
+/** Pasos para agregar el panel a la pantalla de inicio en iPhone. */
+function IOSSteps() {
+  return (
+    <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside marker:font-bold marker:text-primary">
+      <li>Abre este panel en <strong>Safari</strong> (no sirve desde Chrome ni desde otra app).</li>
+      <li>Toca el botón <strong>Compartir</strong>, el cuadrado con la flecha hacia arriba.</li>
+      <li>Baja en la lista y elige <strong>Agregar a inicio</strong>.</li>
+      <li>Toca <strong>Agregar</strong> arriba a la derecha.</li>
+      <li>Abre el ícono nuevo desde la pantalla de inicio e inicia sesión ahí dentro.</li>
+    </ol>
+  )
+}
+
+function IOSInstallSteps() {
+  return (
+    <div className="p-5 rounded-2xl border border-border bg-card">
+      <div className="flex items-start gap-3 mb-4">
+        <Smartphone className="size-5 text-primary shrink-0 mt-0.5" />
+        <div>
+          <p className="font-bold mb-1">Primero instala el panel en el iPhone</p>
+          <p className="text-sm text-muted-foreground">
+            En iPhone las notificaciones solo funcionan con la app agregada a la
+            pantalla de inicio; desde una pestaña de Safari no se pueden activar.
+            Necesitas iOS 16.4 o más nuevo.
+          </p>
+        </div>
+      </div>
+      <IOSSteps />
+      <p className="text-sm text-muted-foreground mt-4">
+        Cuando la abras desde el ícono, vuelve a esta página y va a aparecer el botón
+        para activar los avisos.
+      </p>
+    </div>
+  )
+}
+
 export default function PushManager({ vapidPublicKey }: { vapidPublicKey: string }) {
   const [supported, setSupported] = useState<boolean | null>(null)
   const [permission, setPermission] = useState<NotificationPermission>('default')
@@ -62,6 +102,7 @@ export default function PushManager({ vapidPublicKey }: { vapidPublicKey: string
   const [feedback, setFeedback] = useState<Feedback>(null)
   const [installEvent, setInstallEvent] = useState<InstallPromptEvent | null>(null)
   const [installed, setInstalled] = useState(false)
+  const [isIOS, setIsIOS] = useState(false)
 
   const refreshDevices = useCallback(async () => {
     setDevices(await listMyPushDevices())
@@ -81,12 +122,19 @@ export default function PushManager({ vapidPublicKey }: { vapidPublicKey: string
       const list = ok ? await listMyPushDevices() : []
       if (!alive) return
 
+      // En iOS estos datos hacen falta aunque el push no esté disponible: es lo
+      // que decide si mostramos las instrucciones de "Agregar a inicio".
+      setIsIOS(isIOSDevice())
+      setInstalled(
+        window.matchMedia('(display-mode: standalone)').matches ||
+        // Safari en iOS no implementa display-mode, usa su propia bandera.
+        ('standalone' in navigator && Boolean((navigator as { standalone?: boolean }).standalone))
+      )
       setSupported(ok)
       if (!ok) return
 
       setPermission(Notification.permission)
       setLabel(guessDeviceName())
-      setInstalled(window.matchMedia('(display-mode: standalone)').matches)
       setThisEndpoint(endpoint)
       setDevices(list)
     }
@@ -196,6 +244,14 @@ export default function PushManager({ vapidPublicKey }: { vapidPublicKey: string
     return <div className="h-24 rounded-2xl bg-secondary/40 animate-pulse" />
   }
 
+  // iPhone sin instalar: Safari solo expone las notificaciones dentro de la app
+  // agregada a la pantalla de inicio, nunca en una pestaña normal. Así que en
+  // vez de decir "no soportado" —que es un callejón sin salida— se explica cómo
+  // instalarla, que es justo lo que destraba el push.
+  if (!supported && isIOS && !installed) {
+    return <IOSInstallSteps />
+  }
+
   if (!supported) {
     return (
       <div className="flex items-start gap-3 p-5 rounded-2xl border border-border bg-card">
@@ -203,6 +259,7 @@ export default function PushManager({ vapidPublicKey }: { vapidPublicKey: string
         <p className="text-sm text-muted-foreground">
           Este navegador no soporta notificaciones push. En el celular usa Chrome
           (Android) o Safari con la app agregada a la pantalla de inicio (iPhone).
+          En el iPhone hace falta iOS 16.4 o más nuevo.
         </p>
       </div>
     )
@@ -231,6 +288,8 @@ export default function PushManager({ vapidPublicKey }: { vapidPublicKey: string
               <Download className="size-4" />
               Instalar ahora
             </Button>
+          ) : isIOS ? (
+            <IOSSteps />
           ) : (
             <p className="text-sm text-muted-foreground">
               En Chrome de Android: menú de tres puntos → <strong>Instalar aplicación</strong>{' '}

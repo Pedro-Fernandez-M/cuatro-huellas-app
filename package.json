@@ -2,6 +2,14 @@
   "name": "cuatro-huellas-app",
   "version": "0.1.0",
   "private": true,
+  "browserslist": [
+    "chrome >= 90",
+    "edge >= 90",
+    "firefox >= 90",
+    "safari >= 13",
+    "ios_saf >= 13",
+    "not dead"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
