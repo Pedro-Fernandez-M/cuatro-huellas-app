@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { PawPrint, Dog, Phone, User, Clock, LogIn, LogOut, Loader2, AlertTriangle, Sparkles } from 'lucide-react'
-import type { Appointment, Pet, PaymentMethod } from '@/types'
+import type { Appointment, Pet, PaymentMethod, PublicStaff } from '@/types'
 import { checkIn, checkOut, updateArrivalDeparture } from '@/actions/appointments'
 import { serviceLabel } from '@/lib/constants/services'
 import { sizeLabel } from '@/lib/constants/sizes'
@@ -29,8 +29,9 @@ function nowLocalInputValue() {
   return toDateTimeLocalValue(new Date().toISOString())
 }
 
-export default function CheckinManager({ appointment, pet, prices }: { appointment: Appointment; pet?: Pet | null; prices?: Record<string, number> }) {
+export default function CheckinManager({ appointment, pet, prices, staff = [] }: { appointment: Appointment; pet?: Pet | null; prices?: Record<string, number>; staff?: PublicStaff[] }) {
   const [appt, setAppt] = useState(appointment)
+  const [staffId, setStaffId] = useState<string>(appt.staff_id ?? '')
   const [arrivalValue, setArrivalValue] = useState(toDateTimeLocalValue(appt.arrival_time) || nowLocalInputValue())
   const [departureValue, setDepartureValue] = useState(toDateTimeLocalValue(appt.departure_time) || nowLocalInputValue())
   const [price, setPrice] = useState(
@@ -62,8 +63,8 @@ export default function CheckinManager({ appointment, pet, prices }: { appointme
     }
     startTransition(async () => {
       const iso = new Date(departureValue).toISOString()
-      const result = await checkOut(appt.id, iso, priceNum, paymentMethod)
-      if (result.success) setAppt((a) => ({ ...a, status: 'completed', departure_time: iso, price_charged: priceNum, payment_method: paymentMethod }))
+      const result = await checkOut(appt.id, iso, priceNum, paymentMethod, staffId || null)
+      if (result.success) setAppt((a) => ({ ...a, status: 'completed', departure_time: iso, price_charged: priceNum, payment_method: paymentMethod, staff_id: staffId || null }))
       else setError(result.error ?? 'Error al registrar salida')
     })
   }
@@ -71,10 +72,11 @@ export default function CheckinManager({ appointment, pet, prices }: { appointme
   function handleUpdateTimes() {
     setError(null)
     startTransition(async () => {
-      const fields: { arrival_time?: string; departure_time?: string; price_charged?: number } = {}
+      const fields: { arrival_time?: string; departure_time?: string; price_charged?: number; staff_id?: string | null } = {}
       if (arrivalValue) fields.arrival_time = new Date(arrivalValue).toISOString()
       if (departureValue) fields.departure_time = new Date(departureValue).toISOString()
       if (price) fields.price_charged = Number(price)
+      fields.staff_id = staffId || null
       const result = await updateArrivalDeparture(appt.id, fields)
       if (result.success) {
         setAppt((a) => ({ ...a, ...fields }))
@@ -137,6 +139,15 @@ export default function CheckinManager({ appointment, pet, prices }: { appointme
         </div>
 
         <div className="p-5 rounded-2xl border border-border bg-card">
+          {staff.length > 0 && (
+            <>
+              <Label>¿Quién atendió?</Label>
+              <Select value={staffId} onChange={(e) => setStaffId(e.target.value)} className="mb-4">
+                <option value="">Sin asignar</option>
+                {staff.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </Select>
+            </>
+          )}
           <Label>Valor del servicio (CLP)</Label>
           <Input type="number" min="0" placeholder="Ej: 15000" value={price} onChange={(e) => setPrice(e.target.value)} className="mb-4" />
           <Label>Método de pago</Label>

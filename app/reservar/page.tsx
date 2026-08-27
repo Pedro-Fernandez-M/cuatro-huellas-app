@@ -2,11 +2,12 @@ import BookingWizard from '@/components/booking/BookingWizard'
 import { Logo } from '@/components/Logo'
 import Link from 'next/link'
 import { getCatalog } from '@/actions/catalog'
+import { getActiveStaff } from '@/actions/staff'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ReservarPage() {
-  const { services, prices } = await getCatalog()
+  const [{ services, prices }, staff] = await Promise.all([getCatalog(), getActiveStaff()])
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border">
@@ -19,7 +20,7 @@ export default async function ReservarPage() {
       </header>
       <main className="flex-1 py-10 sm:py-14">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <BookingWizard services={services} prices={prices} />
+          <BookingWizard services={services} prices={prices} staff={staff} />
         </div>
       </main>
     </div>

@@ -1,5 +1,6 @@
 import { listExpenses } from '@/actions/expenses'
 import GastosManager from '@/components/admin/GastosManager'
+import { requireAdmin } from '@/lib/auth/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +14,7 @@ export default async function GastosPage({
 }: {
   searchParams: Promise<{ mes?: string }>
 }) {
+  await requireAdmin()
   const { mes } = await searchParams
   const month = /^\d{4}-\d{2}$/.test(mes ?? '') ? mes! : currentMonth()
   const expenses = await listExpenses(month)

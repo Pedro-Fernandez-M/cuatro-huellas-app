@@ -1,5 +1,6 @@
 import { listAppointmentsForRange } from '@/actions/appointments'
 import { listBlockedDates } from '@/actions/agenda'
+import { getActiveStaff } from '@/actions/staff'
 import { todayInShopTz } from '@/lib/date'
 import AgendaManager from '@/components/admin/AgendaManager'
 
@@ -11,15 +12,16 @@ export default async function AgendaPage() {
   to.setDate(to.getDate() + 45)
   const toStr = to.toISOString().slice(0, 10)
 
-  const [appointments, blockedDates] = await Promise.all([
+  const [appointments, blockedDates, staff] = await Promise.all([
     listAppointmentsForRange(today, toStr),
     listBlockedDates(),
+    getActiveStaff(),
   ])
 
   return (
     <div>
       <h1 className="text-2xl font-black tracking-tight mb-8">Agenda</h1>
-      <AgendaManager initialAppointments={appointments} initialBlockedDates={blockedDates} />
+      <AgendaManager initialAppointments={appointments} initialBlockedDates={blockedDates} staff={staff} />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { TrendingUp } from 'lucide-react'
 import { getIncomeSummary, getMonthIncome } from '@/actions/income'
 import { formatCLP } from '@/lib/date'
 import IncomeManager from '@/components/admin/IncomeManager'
+import { requireAdmin } from '@/lib/auth/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,7 @@ function currentMonth(): string {
 }
 
 export default async function IngresosPage() {
+  await requireAdmin()
   const month = currentMonth()
   const [summary, monthData] = await Promise.all([getIncomeSummary(), getMonthIncome(month)])
   const maxWeekTotal = Math.max(1, ...summary.last8Weeks.map((w) => w.total))

@@ -1,9 +1,11 @@
 import { getAllServices, getCatalog } from '@/actions/catalog'
 import ServicesManager from '@/components/admin/ServicesManager'
+import { requireAdmin } from '@/lib/auth/roles'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ServiciosPage() {
+  await requireAdmin()
   const [services, catalog] = await Promise.all([getAllServices(), getCatalog()])
 
   return (

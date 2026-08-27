@@ -1,9 +1,11 @@
 import { listProducts, listMovements } from '@/actions/inventory'
 import InventoryManager from '@/components/admin/InventoryManager'
+import { requireAdmin } from '@/lib/auth/roles'
 
 export const dynamic = 'force-dynamic'
 
 export default async function InventarioPage() {
+  await requireAdmin()
   const [products, movements] = await Promise.all([listProducts(), listMovements()])
 
   return (

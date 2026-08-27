@@ -1,5 +1,6 @@
 import { getDashboardData } from '@/actions/dashboard'
 import DashboardManager from '@/components/admin/DashboardManager'
+import { requireAdmin } from '@/lib/auth/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +10,7 @@ function currentMonth(): string {
 }
 
 export default async function ResumenPage() {
+  await requireAdmin()
   const data = await getDashboardData(currentMonth())
   return (
     <div>

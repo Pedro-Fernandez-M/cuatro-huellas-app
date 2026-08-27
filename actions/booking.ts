@@ -8,9 +8,13 @@ import { formatDateLongCap } from '@/lib/date'
 import { sendPushToStaff } from '@/lib/push'
 import type { BookingInput, Appointment } from '@/types'
 
-export async function getAvailableSlotsAction(date: string, size: BookingInput['sizeCategory']) {
+export async function getAvailableSlotsAction(
+  date: string,
+  size: BookingInput['sizeCategory'],
+  staffId?: string | null,
+) {
   try {
-    return await getAvailableSlots(date, size)
+    return await getAvailableSlots(date, size, staffId)
   } catch {
     return []
   }
@@ -43,7 +47,7 @@ export async function createBooking(input: BookingInput): Promise<CreateBookingR
 
   try {
     const supabase = await createClient()
-    const { data, error } = await supabase.rpc('book_appointment', {
+    const baseParams = {
       p_owner_name: input.ownerName.trim(),
       p_owner_phone: input.ownerPhone.trim(),
       p_pet_name: input.petName.trim(),
@@ -55,10 +59,17 @@ export async function createBooking(input: BookingInput): Promise<CreateBookingR
       p_appointment_date: input.date,
       p_start_time: input.time,
       p_duration_minutes: durationForSize(input.sizeCategory),
-      p_source: 'online',
-      p_status: 'booked',
+      p_source: 'online' as const,
+      p_status: 'booked' as const,
       p_arrival_time: null,
-    })
+    }
+
+    // Con persona elegida (migración 12). Si la función nueva aún no existe, se
+    // reintenta sin p_staff_id para no bloquear la reserva.
+    let { data, error } = await supabase.rpc('book_appointment', { ...baseParams, p_staff_id: input.staffId ?? null })
+    if (error && !error.message?.includes('CAPACITY_FULL')) {
+      ;({ data, error } = await supabase.rpc('book_appointment', baseParams))
+    }
 
     if (error) {
       if (error.message?.includes('CAPACITY_FULL')) {

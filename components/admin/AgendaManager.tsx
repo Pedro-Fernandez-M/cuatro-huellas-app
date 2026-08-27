@@ -1,16 +1,16 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarDays, Ban, X, Loader2, Clock, LogIn, ChevronRight } from 'lucide-react'
-import type { Appointment, BlockedDate } from '@/types'
+import { CalendarDays, Ban, X, Loader2, Clock, LogIn, ChevronRight, ChevronLeft } from 'lucide-react'
+import type { Appointment, BlockedDate, PublicStaff } from '@/types'
 import { cancelAppointment, markNoShow, rescheduleAppointment, checkIn } from '@/actions/appointments'
 import { blockDate, unblockDate } from '@/actions/agenda'
 import { getAvailableSlotsAction } from '@/actions/booking'
 import { serviceLabel } from '@/lib/constants/services'
 import { sizeLabel } from '@/lib/constants/sizes'
-import { formatDateLong } from '@/lib/date'
+import { formatDateLong, todayInShopTz } from '@/lib/date'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,36 @@ const STATUS_BADGE: Record<string, { label: string; variant: 'default' | 'primar
   no_show: { label: 'No llegó', variant: 'default' },
 }
 
+// Paleta estable para distinguir a cada funcionaria por color.
+const STAFF_COLORS = [
+  'oklch(0.62 0.13 250)', // azul
+  'oklch(0.60 0.13 160)', // verde
+  'oklch(0.65 0.15 25)',  // terracota
+  'oklch(0.58 0.14 300)', // morado
+  'oklch(0.62 0.13 200)', // celeste
+]
+function staffColorFor(index: number) {
+  return STAFF_COLORS[index % STAFF_COLORS.length]
+}
+
+// ── Utilidades de fecha (trabajan con strings YYYY-MM-DD, sin zonas raras) ──
+function addDays(iso: string, n: number): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const dt = new Date(y, m - 1, d + n)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
+function weekdayShort(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('es-CL', { weekday: 'short' }).replace('.', '')
+}
+function dayNumber(iso: string): number {
+  return Number(iso.split('-')[2])
+}
+
+const ACTIVE_STATUSES = new Set(['booked', 'arrived', 'completed'])
+
+interface StaffInfo { name: string; color: string }
+
 function RescheduleForm({ appt, onDone }: { appt: Appointment; onDone: () => void }) {
   const [date, setDate] = useState(appt.appointment_date)
   const [slots, setSlots] = useState<string[]>([])
@@ -36,7 +66,7 @@ function RescheduleForm({ appt, onDone }: { appt: Appointment; onDone: () => voi
     setDate(d)
     setTime(null)
     setLoading(true)
-    const available = await getAvailableSlotsAction(d, appt.size_category)
+    const available = await getAvailableSlotsAction(d, appt.size_category, appt.staff_id)
     setSlots(available)
     setLoading(false)
   }
@@ -80,23 +110,40 @@ function RescheduleForm({ appt, onDone }: { appt: Appointment; onDone: () => voi
   )
 }
 
-function AppointmentRow({ appt }: { appt: Appointment }) {
+function AppointmentRow({ appt, staffInfo }: { appt: Appointment; staffInfo: StaffInfo | null }) {
   const router = useRouter()
   const [rescheduling, setRescheduling] = useState(false)
   const [isPending, startTransition] = useTransition()
   const badge = STATUS_BADGE[appt.status]
   const canModify = appt.status === 'booked' || appt.status === 'arrived'
+  const dimmed = appt.status === 'cancelled' || appt.status === 'no_show'
 
   return (
-    <div className="p-4 rounded-xl border border-border bg-card">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <p className="text-xs text-muted-foreground first-letter:uppercase mb-0.5">{formatDateLong(appt.appointment_date)} · {appt.start_time.slice(0, 5)}</p>
-          <p className="font-semibold text-sm">{appt.pet_name} <span className="text-muted-foreground font-normal">· {appt.pet_breed}</span></p>
-          <p className="text-xs text-muted-foreground">{serviceLabel(appt.service)} · {sizeLabel(appt.size_category)} · {appt.owner_name} · {appt.owner_phone}</p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
+    <div
+      className={`p-4 rounded-xl border bg-card flex gap-3 ${dimmed ? 'opacity-55' : ''}`}
+      style={staffInfo ? { borderLeft: `4px solid ${staffInfo.color}` } : undefined}
+    >
+      {/* Hora grande a la izquierda */}
+      <div className="shrink-0 w-14 text-center">
+        <p className="text-lg font-black leading-none">{appt.start_time.slice(0, 5)}</p>
+        <p className="text-[10px] text-muted-foreground mt-1">{Math.round(appt.duration_minutes / 60)}h</p>
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <p className="font-semibold text-sm">{appt.pet_name} <span className="text-muted-foreground font-normal">· {appt.pet_breed}</span></p>
+            <p className="text-xs text-muted-foreground">{serviceLabel(appt.service)} · {sizeLabel(appt.size_category)} · {appt.owner_name} · {appt.owner_phone}</p>
+            {staffInfo && (
+              <p className="text-xs font-semibold mt-1 flex items-center gap-1.5" style={{ color: staffInfo.color }}>
+                <span className="size-2 rounded-full" style={{ backgroundColor: staffInfo.color }} /> {staffInfo.name}
+              </p>
+            )}
+          </div>
           <Badge variant={badge.variant}>{badge.label}</Badge>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap mt-3">
           <WhatsAppButton appointment={appt} />
 
           {appt.status === 'booked' && (
@@ -144,8 +191,8 @@ function AppointmentRow({ appt }: { appt: Appointment }) {
             </>
           )}
         </div>
+        {rescheduling && <RescheduleForm appt={appt} onDone={() => setRescheduling(false)} />}
       </div>
-      {rescheduling && <RescheduleForm appt={appt} onDone={() => setRescheduling(false)} />}
     </div>
   )
 }
@@ -153,14 +200,58 @@ function AppointmentRow({ appt }: { appt: Appointment }) {
 export default function AgendaManager({
   initialAppointments,
   initialBlockedDates,
+  staff = [],
 }: {
   initialAppointments: Appointment[]
   initialBlockedDates: BlockedDate[]
+  staff?: PublicStaff[]
 }) {
+  const today = todayInShopTz()
+  const [selectedDate, setSelectedDate] = useState(today)
+  const [staffFilter, setStaffFilter] = useState<string>('all')
   const [blockDateValue, setBlockDateValue] = useState('')
   const [blockReason, setBlockReason] = useState('')
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
+
+  // Mapa id -> {nombre, color}
+  const staffMap = useMemo(() => {
+    const m = new Map<string, StaffInfo>()
+    staff.forEach((s, i) => m.set(s.id, { name: s.name, color: staffColorFor(i) }))
+    return m
+  }, [staff])
+
+  // Agrupa las citas por fecha
+  const byDate = useMemo(() => {
+    const m = new Map<string, Appointment[]>()
+    for (const a of initialAppointments) {
+      const arr = m.get(a.appointment_date) ?? []
+      arr.push(a)
+      m.set(a.appointment_date, arr)
+    }
+    return m
+  }, [initialAppointments])
+
+  const blockedSet = useMemo(() => new Set(initialBlockedDates.map((b) => b.blocked_date)), [initialBlockedDates])
+
+  const matchesFilter = (a: Appointment) => staffFilter === 'all' || a.staff_id === staffFilter
+
+  // Tira de días (14 días desde hoy)
+  const stripDays = Array.from({ length: 14 }, (_, i) => addDays(today, i))
+  const activeCountFor = (iso: string) =>
+    (byDate.get(iso) ?? []).filter((a) => ACTIVE_STATUSES.has(a.status) && matchesFilter(a)).length
+
+  const dayAppts = (byDate.get(selectedDate) ?? [])
+    .filter(matchesFilter)
+    .slice()
+    .sort((a, b) => a.start_time.localeCompare(b.start_time))
+
+  const selectedLabel =
+    selectedDate === today ? 'Hoy'
+      : selectedDate === addDays(today, 1) ? 'Mañana'
+        : formatDateLong(selectedDate)
+
+  const isSelectedBlocked = blockedSet.has(selectedDate)
 
   function submitBlock() {
     if (!blockDateValue) return
@@ -173,44 +264,134 @@ export default function AgendaManager({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="lg:col-span-2 space-y-3">
-        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-2">Próximas citas</h2>
-        {initialAppointments.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-2xl">
-            <CalendarDays className="size-10 mx-auto mb-3 opacity-30" />
-            <p>No hay citas próximas.</p>
-          </div>
-        ) : (
-          initialAppointments.map((a) => <AppointmentRow key={a.id} appt={a} />)
-        )}
+    <div className="space-y-6">
+      {/* Filtro por persona */}
+      {staff.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setStaffFilter('all')}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${staffFilter === 'all' ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:border-primary/50'}`}
+          >
+            Todas
+          </button>
+          {staff.map((s) => {
+            const color = staffMap.get(s.id)!.color
+            const active = staffFilter === s.id
+            return (
+              <button
+                key={s.id}
+                onClick={() => setStaffFilter(s.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all flex items-center gap-1.5 ${active ? 'text-white border-transparent' : 'border-border bg-card hover:border-primary/50'}`}
+                style={active ? { backgroundColor: color } : undefined}
+              >
+                <span className="size-2 rounded-full" style={{ backgroundColor: active ? 'white' : color }} /> {s.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Tira de días tipo calendario */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+          disabled={selectedDate <= today}
+          className="shrink-0 size-9 rounded-lg border border-border bg-card flex items-center justify-center hover:border-primary/50 disabled:opacity-30 transition-all"
+          aria-label="Día anterior"
+        >
+          <ChevronLeft className="size-4" />
+        </button>
+        <div className="flex-1 flex gap-1.5 overflow-x-auto pb-1">
+          {stripDays.map((iso) => {
+            const isSel = iso === selectedDate
+            const isBlocked = blockedSet.has(iso)
+            const count = activeCountFor(iso)
+            return (
+              <button
+                key={iso}
+                onClick={() => setSelectedDate(iso)}
+                className={`shrink-0 w-14 py-2 rounded-xl border text-center transition-all relative ${isSel ? 'bg-primary text-primary-foreground border-primary' : 'border-border bg-card hover:border-primary/50'}`}
+              >
+                <p className={`text-[10px] uppercase font-semibold ${isSel ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>{weekdayShort(iso)}</p>
+                <p className="text-lg font-black leading-tight">{dayNumber(iso)}</p>
+                {isBlocked ? (
+                  <span className={`text-[9px] ${isSel ? 'text-primary-foreground/80' : 'text-destructive'}`}>bloq.</span>
+                ) : count > 0 ? (
+                  <span className={`inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-bold ${isSel ? 'bg-primary-foreground text-primary' : 'bg-primary/15 text-primary'}`}>{count}</span>
+                ) : (
+                  <span className="text-[9px] text-transparent">·</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+        <button
+          onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+          className="shrink-0 size-9 rounded-lg border border-border bg-card flex items-center justify-center hover:border-primary/50 transition-all"
+          aria-label="Día siguiente"
+        >
+          <ChevronRight className="size-4" />
+        </button>
+        <Input
+          type="date"
+          value={selectedDate}
+          min={today}
+          onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+          className="w-auto shrink-0 hidden sm:block"
+        />
       </div>
 
-      <div>
-        <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-2">Bloquear días</h2>
-        <div className="p-4 rounded-xl border border-border bg-card space-y-3 mb-4">
-          <Input type="date" value={blockDateValue} onChange={(e) => setBlockDateValue(e.target.value)} />
-          <Input placeholder="Motivo (opcional)" value={blockReason} onChange={(e) => setBlockReason(e.target.value)} />
-          {error && <p className="text-xs text-destructive">{error}</p>}
-          <Button size="sm" className="w-full" disabled={!blockDateValue || isPending} onClick={submitBlock}>
-            <Ban className="size-3.5" /> Bloquear día
-          </Button>
-        </div>
-        <div className="space-y-2">
-          {initialBlockedDates.map((b) => (
-            <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card text-sm">
-              <div>
-                <p className="font-medium first-letter:uppercase">{formatDateLong(b.blocked_date)}</p>
-                {b.reason && <p className="text-xs text-muted-foreground">{b.reason}</p>}
-              </div>
-              <button
-                onClick={() => startTransition(async () => { await unblockDate(b.id) })}
-                className="text-xs text-muted-foreground hover:text-destructive transition-colors"
-              >
-                Quitar
-              </button>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Citas del día seleccionado */}
+        <div className="lg:col-span-2 space-y-3">
+          <h2 className="text-lg font-black tracking-tight first-letter:uppercase">
+            {selectedLabel}
+            {dayAppts.length > 0 && <span className="text-sm font-semibold text-muted-foreground ml-2">· {dayAppts.length} cita{dayAppts.length > 1 ? 's' : ''}</span>}
+          </h2>
+          {isSelectedBlocked && (
+            <div className="p-3 rounded-xl bg-destructive/5 border border-destructive/30 text-sm text-destructive flex items-center gap-2">
+              <Ban className="size-4" /> Día bloqueado — no se reciben reservas online.
             </div>
-          ))}
+          )}
+          {dayAppts.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-2xl">
+              <CalendarDays className="size-10 mx-auto mb-3 opacity-30" />
+              <p>Sin citas para este día.</p>
+            </div>
+          ) : (
+            dayAppts.map((a) => (
+              <AppointmentRow key={a.id} appt={a} staffInfo={a.staff_id ? staffMap.get(a.staff_id) ?? null : null} />
+            ))
+          )}
+        </div>
+
+        {/* Bloquear días */}
+        <div>
+          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-2">Bloquear días</h2>
+          <div className="p-4 rounded-xl border border-border bg-card space-y-3 mb-4">
+            <Input type="date" value={blockDateValue} onChange={(e) => setBlockDateValue(e.target.value)} />
+            <Input placeholder="Motivo (opcional)" value={blockReason} onChange={(e) => setBlockReason(e.target.value)} />
+            {error && <p className="text-xs text-destructive">{error}</p>}
+            <Button size="sm" className="w-full" disabled={!blockDateValue || isPending} onClick={submitBlock}>
+              <Ban className="size-3.5" /> Bloquear día
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {initialBlockedDates.map((b) => (
+              <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-card text-sm">
+                <div>
+                  <p className="font-medium first-letter:uppercase">{formatDateLong(b.blocked_date)}</p>
+                  {b.reason && <p className="text-xs text-muted-foreground">{b.reason}</p>}
+                </div>
+                <button
+                  onClick={() => startTransition(async () => { await unblockDate(b.id) })}
+                  className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  Quitar
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

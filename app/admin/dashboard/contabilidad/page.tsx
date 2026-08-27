@@ -1,6 +1,7 @@
 import { getAccountingData, getCashClose } from '@/actions/accounting'
 import { todayInShopTz } from '@/lib/date'
 import AccountingManager from '@/components/admin/AccountingManager'
+import { requireAdmin } from '@/lib/auth/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +11,7 @@ function currentMonth(): string {
 }
 
 export default async function ContabilidadPage() {
+  await requireAdmin()
   const today = todayInShopTz()
   const [data, cash] = await Promise.all([getAccountingData(currentMonth()), getCashClose(today)])
 

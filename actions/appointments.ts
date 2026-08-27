@@ -68,7 +68,8 @@ export async function checkOut(
   id: string,
   departureTime: string,
   priceCharged: number,
-  paymentMethod?: string | null
+  paymentMethod?: string | null,
+  staffId?: string | null,
 ): Promise<ActionResult> {
   const supabase = await createClient()
   const { error } = await supabase
@@ -78,6 +79,7 @@ export async function checkOut(
       departure_time: departureTime,
       price_charged: priceCharged,
       payment_method: paymentMethod ?? null,
+      ...(staffId !== undefined ? { staff_id: staffId } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
@@ -91,7 +93,7 @@ export async function checkOut(
 
 export async function updateArrivalDeparture(
   id: string,
-  fields: { arrival_time?: string | null; departure_time?: string | null; price_charged?: number | null }
+  fields: { arrival_time?: string | null; departure_time?: string | null; price_charged?: number | null; staff_id?: string | null }
 ): Promise<ActionResult> {
   const supabase = await createClient()
   const { error } = await supabase
@@ -168,7 +170,7 @@ export async function createWalkIn(
 
   const supabase = await createClient()
   const now = new Date().toISOString()
-  const { data, error } = await supabase.rpc('book_appointment', {
+  const baseParams = {
     p_owner_name: input.ownerName.trim(),
     p_owner_phone: input.ownerPhone.trim(),
     p_pet_name: input.petName.trim(),
@@ -180,11 +182,17 @@ export async function createWalkIn(
     p_appointment_date: input.date,
     p_start_time: input.time,
     p_duration_minutes: durationForSize(input.sizeCategory),
-    p_source: 'walk_in',
-    p_status: alreadyHere ? 'arrived' : 'booked',
+    p_source: 'walk_in' as const,
+    p_status: (alreadyHere ? 'arrived' : 'booked') as 'arrived' | 'booked',
     p_arrival_time: alreadyHere ? now : null,
     p_force: true,
-  })
+  }
+
+  // Con persona (migración 12). Fallback sin p_staff_id si la función nueva aún no existe.
+  let { data, error } = await supabase.rpc('book_appointment', { ...baseParams, p_staff_id: input.staffId ?? null })
+  if (error) {
+    ;({ data, error } = await supabase.rpc('book_appointment', baseParams))
+  }
 
   if (error) {
     return { success: false, error: 'No se pudo registrar. Intenta nuevamente.' }

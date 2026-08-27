@@ -10,6 +10,7 @@ import { ADDONS, COAT_CONDITIONS, type AddonId, type CoatCondition } from '@/lib
 import { BREEDS, OTHER_BREED_OPTION } from '@/lib/constants/breeds'
 import { todayInShopTz, formatCLP } from '@/lib/date'
 import { createWalkIn } from '@/actions/appointments'
+import type { PublicStaff } from '@/types'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
@@ -28,9 +29,10 @@ const schema = z.object({
 )
 type FormValues = z.infer<typeof schema>
 
-export default function WalkInForm({ services }: { services: { id: string; name: string }[] }) {
+export default function WalkInForm({ services, staff = [] }: { services: { id: string; name: string }[]; staff?: PublicStaff[] }) {
   const [service, setService] = useState<string>(services[0]?.id ?? '')
   const [size, setSize] = useState<SizeCategory>(SIZES[0].id)
+  const [staffId, setStaffId] = useState<string>('')
   const [addons, setAddons] = useState<AddonId[]>([])
   const [coatCondition, setCoatCondition] = useState<CoatCondition | null>(null)
   const today = todayInShopTz()
@@ -72,6 +74,7 @@ export default function WalkInForm({ services }: { services: { id: string; name:
         petBreed: breed,
         ownerName: data.ownerName.trim(),
         ownerPhone: data.ownerPhone.trim(),
+        staffId: staffId || null,
       }, alreadyHere)
       if (result.success) {
         setSuccess(true)
@@ -112,6 +115,16 @@ export default function WalkInForm({ services }: { services: { id: string; name:
           {SIZES.map((s) => <option key={s.id} value={s.id}>{s.label} ({s.weightRange})</option>)}
         </Select>
       </div>
+
+      {staff.length > 0 && (
+        <div>
+          <Label>¿Quién atiende?</Label>
+          <Select value={staffId} onChange={(e) => setStaffId(e.target.value)}>
+            <option value="">Sin asignar</option>
+            {staff.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </Select>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div>

@@ -20,19 +20,22 @@ import { BREEDS, OTHER_BREED_OPTION } from '@/lib/constants/breeds'
 import { estimateTotal } from '@/lib/pricing'
 import { formatCLP } from '@/lib/date'
 import { getAvailableSlotsAction, getBlockedDatesAction, createBooking } from '@/actions/booking'
-import type { Service } from '@/types'
+import { StaffAvatar } from '@/components/StaffAvatar'
+import type { Service, PublicStaff } from '@/types'
 import type { PriceMap } from '@/actions/catalog'
 
 interface Props {
   services: Service[]
   prices: PriceMap
+  staff: PublicStaff[]
 }
 
-type Step = 'service' | 'size' | 'datetime' | 'extras' | 'details' | 'success'
+type Step = 'service' | 'size' | 'staff' | 'datetime' | 'extras' | 'details' | 'success'
 
-const STEPS: { key: Step; label: string }[] = [
+const ALL_STEPS: { key: Step; label: string }[] = [
   { key: 'service', label: 'Servicio' },
   { key: 'size', label: 'Tamaño' },
+  { key: 'staff', label: 'Quién' },
   { key: 'datetime', label: 'Fecha' },
   { key: 'extras', label: 'Extras' },
   { key: 'details', label: 'Datos' },
@@ -58,12 +61,12 @@ const detailsSchema = z.object({
 )
 type DetailsForm = z.infer<typeof detailsSchema>
 
-function StepBar({ current }: { current: Step }) {
-  const idx = STEPS.findIndex((s) => s.key === current)
+function StepBar({ current, steps }: { current: Step; steps: { key: Step; label: string }[] }) {
+  const idx = steps.findIndex((s) => s.key === current)
   if (idx === -1) return null
   return (
     <div className="flex items-center gap-0 mb-8">
-      {STEPS.map((s, i) => {
+      {steps.map((s, i) => {
         const done = i < idx
         const active = i === idx
         return (
@@ -74,7 +77,7 @@ function StepBar({ current }: { current: Step }) {
               </div>
               <span className="text-xs font-medium hidden sm:block">{s.label}</span>
             </div>
-            {i < STEPS.length - 1 && <div className={`flex-1 h-px mx-2 ${i < idx ? 'bg-primary/40' : 'bg-border'}`} />}
+            {i < steps.length - 1 && <div className={`flex-1 h-px mx-2 ${i < idx ? 'bg-primary/40' : 'bg-border'}`} />}
           </div>
         )
       })}
@@ -82,10 +85,13 @@ function StepBar({ current }: { current: Step }) {
   )
 }
 
-export default function BookingWizard({ services, prices }: Props) {
+export default function BookingWizard({ services, prices, staff }: Props) {
+  const hasStaff = staff.length > 0
+  const steps = ALL_STEPS.filter((s) => s.key !== 'staff' || hasStaff)
   const [step, setStep] = useState<Step>('service')
   const [service, setService] = useState<string | null>(null)
   const [size, setSize] = useState<SizeCategory | null>(null)
+  const [staffId, setStaffId] = useState<string | null>(null)
   const [date, setDate] = useState<string | null>(null)
   const [time, setTime] = useState<string | null>(null)
   const [blockedDates, setBlockedDates] = useState<string[]>([])
@@ -113,6 +119,15 @@ export default function BookingWizard({ services, prices }: Props) {
 
   function selectSize(s: SizeCategory) {
     setSize(s)
+    setStaffId(null)
+    setDate(null)
+    setTime(null)
+    setSlots([])
+    setStep(hasStaff ? 'staff' : 'datetime')
+  }
+
+  function selectStaff(id: string) {
+    setStaffId(id)
     setDate(null)
     setTime(null)
     setSlots([])
@@ -124,7 +139,7 @@ export default function BookingWizard({ services, prices }: Props) {
     setDate(d)
     setTime(null)
     setLoadingSlots(true)
-    const available = await getAvailableSlotsAction(d, size)
+    const available = await getAvailableSlotsAction(d, size, staffId)
     setSlots(available)
     setLoadingSlots(false)
   }
@@ -155,6 +170,7 @@ export default function BookingWizard({ services, prices }: Props) {
         petBreed: breed,
         ownerName: data.ownerName.trim(),
         ownerPhone: data.ownerPhone.trim(),
+        staffId,
       })
       if (result.success) {
         setAppointmentId(result.appointmentId ?? null)
@@ -167,6 +183,7 @@ export default function BookingWizard({ services, prices }: Props) {
 
   const selectedServiceObj = services.find((s) => s.id === service)
   const selectedSizeObj = SIZES.find((s) => s.id === size)
+  const selectedStaffObj = staff.find((s) => s.id === staffId)
 
   if (step === 'success') {
     return (
@@ -186,6 +203,12 @@ export default function BookingWizard({ services, prices }: Props) {
             <Dog className="size-4 text-primary shrink-0" />
             <span className="text-sm"><span className="text-muted-foreground">Tamaño:</span> <strong>{selectedSizeObj?.label}</strong></span>
           </div>
+          {selectedStaffObj && (
+            <div className="flex items-center gap-3">
+              <User className="size-4 text-primary shrink-0" />
+              <span className="text-sm"><span className="text-muted-foreground">Te atiende:</span> <strong>{selectedStaffObj.name}</strong></span>
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <Calendar className="size-4 text-primary shrink-0" />
             <span className="text-sm"><span className="text-muted-foreground">Fecha:</span> <strong className="first-letter:uppercase">{date ? formatDate(date) : ''}</strong></span>
@@ -202,6 +225,7 @@ export default function BookingWizard({ services, prices }: Props) {
             setStep('service')
             setService(null)
             setSize(null)
+            setStaffId(null)
             setDate(null)
             setTime(null)
             setAddons([])
@@ -218,13 +242,13 @@ export default function BookingWizard({ services, prices }: Props) {
 
   return (
     <div className="animate-fade-in">
-      <StepBar current={step} />
+      <StepBar current={step} steps={steps} />
 
       {/* Paso 1: Servicio */}
       {step === 'service' && (
         <div>
-          <h2 className="text-2xl font-black mb-1">¿Qué servicio necesita tu peludo?</h2>
-          <p className="text-base text-muted-foreground mb-6">Elige un servicio</p>
+          <h2 className="text-3xl font-black mb-1">¿Qué servicio necesita tu peludo?</h2>
+          <p className="text-lg text-muted-foreground mb-6">Elige un servicio</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {services.map((s) => {
               const Icon = serviceIcon(s.id)
@@ -252,8 +276,8 @@ export default function BookingWizard({ services, prices }: Props) {
           <button onClick={() => setStep('service')} className="flex items-center gap-1 text-base text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ChevronLeft className="size-5" /> Volver
           </button>
-          <h2 className="text-2xl font-black mb-1">¿Qué tamaño tiene tu perro?</h2>
-          <p className="text-base text-muted-foreground mb-6">Perros grandes y extra grandes solo se agendan durante la mañana</p>
+          <h2 className="text-3xl font-black mb-1">¿Qué tamaño tiene tu perro?</h2>
+          <p className="text-lg text-muted-foreground mb-6">Perros grandes y extra grandes solo se agendan durante la mañana</p>
           <div className="grid grid-cols-2 gap-4">
             {SIZES.map((s) => (
               <button
@@ -274,10 +298,33 @@ export default function BookingWizard({ services, prices }: Props) {
         </div>
       )}
 
-      {/* Paso 3: Fecha y hora */}
-      {step === 'datetime' && (
+      {/* Paso 3: ¿Con quién? */}
+      {step === 'staff' && (
         <div>
           <button onClick={() => setStep('size')} className="flex items-center gap-1 text-base text-muted-foreground hover:text-foreground mb-4 transition-colors">
+            <ChevronLeft className="size-5" /> Volver
+          </button>
+          <h2 className="text-3xl font-black mb-1">¿Con quién quieres atenderte?</h2>
+          <p className="text-lg text-muted-foreground mb-6">Elige a la persona que atenderá a tu peludo</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {staff.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => selectStaff(m.id)}
+                className="flex flex-col items-center text-center p-6 rounded-2xl border-2 border-border bg-card hover:border-primary/60 active:border-primary transition-all"
+              >
+                <StaffAvatar name={m.name} photoUrl={m.photo_url} size={96} />
+                <p className="font-black text-lg mt-4">{m.name}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Paso 4: Fecha y hora */}
+      {step === 'datetime' && (
+        <div>
+          <button onClick={() => setStep(hasStaff ? 'staff' : 'size')} className="flex items-center gap-1 text-base text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ChevronLeft className="size-4" /> Volver
           </button>
           <div className="flex items-center gap-2 flex-wrap mb-5 text-sm text-muted-foreground">
@@ -287,9 +334,14 @@ export default function BookingWizard({ services, prices }: Props) {
             <span className="flex items-center gap-1.5 bg-secondary/60 rounded-lg px-3 py-1.5">
               <Dog className="size-3.5 text-primary" /> {selectedSizeObj?.label}
             </span>
+            {selectedStaffObj && (
+              <span className="flex items-center gap-1.5 bg-secondary/60 rounded-lg px-3 py-1.5">
+                <User className="size-3.5 text-primary" /> {selectedStaffObj.name}
+              </span>
+            )}
           </div>
-          <h2 className="text-2xl font-black mb-1">¿Cuándo te gustaría venir?</h2>
-          <p className="text-base text-muted-foreground mb-6">
+          <h2 className="text-3xl font-black mb-1">¿Cuándo te gustaría venir?</h2>
+          <p className="text-lg text-muted-foreground mb-6">
             {size && isMorningOnly(size)
               ? 'Perros de este tamaño solo se agendan durante la mañana'
               : 'Elige fecha y horario disponible'}
@@ -346,8 +398,8 @@ export default function BookingWizard({ services, prices }: Props) {
           <button onClick={() => setStep('datetime')} className="flex items-center gap-1 text-base text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ChevronLeft className="size-4" /> Volver
           </button>
-          <h2 className="text-2xl font-black mb-1">¿Algo extra? (opcional)</h2>
-          <p className="text-base text-muted-foreground mb-6">Puedes dejar esto en blanco si no aplica</p>
+          <h2 className="text-3xl font-black mb-1">¿Algo extra? (opcional)</h2>
+          <p className="text-lg text-muted-foreground mb-6">Puedes dejar esto en blanco si no aplica</p>
 
           <p className="text-lg font-bold mb-3">Servicios adicionales</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
@@ -399,14 +451,15 @@ export default function BookingWizard({ services, prices }: Props) {
           <button onClick={() => setStep('extras')} className="flex items-center gap-1 text-base text-muted-foreground hover:text-foreground mb-4 transition-colors">
             <ChevronLeft className="size-4" /> Volver
           </button>
-          <h2 className="text-2xl font-black mb-1">Datos de tu mascota y tuyos</h2>
-          <p className="text-base text-muted-foreground mb-6">Sin abono — solo confirmamos tu hora</p>
+          <h2 className="text-3xl font-black mb-1">Datos de tu mascota y tuyos</h2>
+          <p className="text-lg text-muted-foreground mb-6">Sin abono — solo confirmamos tu hora</p>
 
           <div className="bg-card border border-border rounded-xl p-4 mb-6 text-sm space-y-1.5">
             <div className="flex items-center gap-2 text-muted-foreground flex-wrap">
               <PawPrint className="size-3.5 text-primary" /> <span>{selectedServiceObj?.name}</span>
               <span className="mx-1">·</span>
               <Dog className="size-3.5 text-primary" /> <span>{selectedSizeObj?.label}</span>
+              {selectedStaffObj && (<><span className="mx-1">·</span><User className="size-3.5 text-primary" /> <span>{selectedStaffObj.name}</span></>)}
             </div>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="size-3.5 text-primary" />

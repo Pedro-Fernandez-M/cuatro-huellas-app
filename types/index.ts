@@ -8,6 +8,28 @@ export type { ServiceId, SizeCategory, AddonId, CoatCondition, PaymentMethod }
 export type AppointmentStatus = 'booked' | 'arrived' | 'completed' | 'cancelled' | 'no_show'
 export type AppointmentSource = 'online' | 'walk_in' | 'manual'
 
+export type StaffRole = 'admin' | 'assistant'
+
+/** Funcionaria que atiende. Registro completo (uso interno/admin). */
+export interface Staff {
+  id: string
+  email: string
+  name: string
+  role: StaffRole
+  active: boolean
+  photo_url: string | null
+  sort_order: number
+  created_at: string
+}
+
+/** Versión pública segura (sin email) para la web de reservas. */
+export interface PublicStaff {
+  id: string
+  name: string
+  photo_url: string | null
+  sort_order: number
+}
+
 export interface Offer {
   id: string
   message: string
@@ -62,6 +84,8 @@ export interface Appointment {
   departure_time: string | null
   price_charged: number | null
   payment_method: PaymentMethod | null
+
+  staff_id: string | null
 
   notes: string | null
   created_at: string
@@ -143,4 +167,5 @@ export interface BookingInput {
   petBreed: string
   ownerName: string
   ownerPhone: string
+  staffId?: string | null
 }

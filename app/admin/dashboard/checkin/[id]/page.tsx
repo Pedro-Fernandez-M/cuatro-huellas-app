@@ -4,6 +4,7 @@ import { ChevronLeft } from 'lucide-react'
 import { getAppointment } from '@/actions/appointments'
 import { getPet } from '@/actions/clients'
 import { getCatalog } from '@/actions/catalog'
+import { getActiveStaff } from '@/actions/staff'
 import CheckinManager from '@/components/admin/CheckinManager'
 
 export const dynamic = 'force-dynamic'
@@ -12,9 +13,10 @@ export default async function CheckinPage({ params }: { params: Promise<{ id: st
   const { id } = await params
   const appointment = await getAppointment(id)
   if (!appointment) notFound()
-  const [pet, catalog] = await Promise.all([
+  const [pet, catalog, staff] = await Promise.all([
     appointment.pet_id ? getPet(appointment.pet_id) : Promise.resolve(null),
     getCatalog(),
+    getActiveStaff(),
   ])
 
   return (
@@ -22,7 +24,7 @@ export default async function CheckinPage({ params }: { params: Promise<{ id: st
       <Link href="/admin/dashboard" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors w-fit">
         <ChevronLeft className="size-4" /> Volver
       </Link>
-      <CheckinManager appointment={appointment} pet={pet} prices={catalog.prices} />
+      <CheckinManager appointment={appointment} pet={pet} prices={catalog.prices} staff={staff} />
     </div>
   )
 }

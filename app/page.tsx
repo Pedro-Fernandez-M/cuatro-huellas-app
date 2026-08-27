@@ -7,10 +7,12 @@ import { SIZES } from '@/lib/constants/sizes'
 import { formatCLP } from '@/lib/date'
 import { getCatalog } from '@/actions/catalog'
 import { getActiveOffers } from '@/actions/offers'
+import { getActiveStaff } from '@/actions/staff'
 import { Logo } from '@/components/Logo'
 import { GalleryImage } from '@/components/GalleryImage'
 import { HeroCollage } from '@/components/HeroCollage'
 import { OfferBanner } from '@/components/OfferBanner'
+import { StaffAvatar } from '@/components/StaffAvatar'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,7 +58,7 @@ const LOCAL_BUSINESS_JSONLD = {
 }
 
 export default async function HomePage() {
-  const [{ services, prices }, offers] = await Promise.all([getCatalog(), getActiveOffers()])
+  const [{ services, prices }, offers, staff] = await Promise.all([getCatalog(), getActiveOffers(), getActiveStaff()])
   return (
     <div className="flex flex-col min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LOCAL_BUSINESS_JSONLD) }} />
@@ -115,7 +117,7 @@ export default async function HomePage() {
                 Tu mascota,<br />
                 <span className="text-gradient-warm">feliz y regalona</span> 🐶
               </h1>
-              <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-xl sm:text-2xl text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed">
                 Peluquería canina en Valdivia. Baño, corte y mucho amor para tu perro.
                 Reserva tu hora online en minutos — sin llamadas y sin abono.
               </p>
@@ -230,6 +232,25 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* ═══ NUESTRO EQUIPO ═══ */}
+        {staff.length > 0 && (
+          <section className="py-20 border-t border-border">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
+              <p className="text-xs tracking-[0.3em] text-primary uppercase font-bold mb-3">— Quiénes te atienden</p>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-3">Nuestro equipo</h2>
+              <p className="text-lg text-muted-foreground mb-12">Manos expertas y mucho cariño para tu peludo</p>
+              <div className="flex flex-wrap justify-center gap-10 sm:gap-16">
+                {staff.map((m) => (
+                  <div key={m.id} className="flex flex-col items-center">
+                    <StaffAvatar name={m.name} photoUrl={m.photo_url} size={140} />
+                    <p className="font-black text-xl mt-5">{m.name}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ═══ GALERÍA (Instagram) ═══ */}
         <section id="galeria" className="py-20 border-t border-border bg-rose">

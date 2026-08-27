@@ -1,9 +1,11 @@
 import { getAllOffers } from '@/actions/offers'
 import OffersManager from '@/components/admin/OffersManager'
+import { requireAdmin } from '@/lib/auth/roles'
 
 export const dynamic = 'force-dynamic'
 
 export default async function OfertasPage() {
+  await requireAdmin()
   const offers = await getAllOffers()
 
   return (
