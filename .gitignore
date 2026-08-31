@@ -43,3 +43,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Manuales del staff: llevan usuario y contraseña adentro y este repo es
+# PÚBLICO. Se generan localmente y se entregan impresos o por WhatsApp.
+/manuales/
+/Como-entrar-al-panel.pdf
+/Manual-Icono-en-el-telefono.pdf
