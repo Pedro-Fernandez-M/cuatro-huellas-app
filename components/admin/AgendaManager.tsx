@@ -1,11 +1,11 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CalendarDays, Ban, X, Loader2, Clock, LogIn, ChevronRight, ChevronLeft } from 'lucide-react'
+import { CalendarDays, CalendarRange, Ban, X, Loader2, Clock, LogIn, ChevronRight, ChevronLeft, List } from 'lucide-react'
 import type { Appointment, BlockedDate, PublicStaff } from '@/types'
-import { cancelAppointment, markNoShow, rescheduleAppointment, checkIn } from '@/actions/appointments'
+import { cancelAppointment, markNoShow, rescheduleAppointment, checkIn, listAppointmentsForRange } from '@/actions/appointments'
 import { blockDate, unblockDate } from '@/actions/agenda'
 import { getAvailableSlotsAction } from '@/actions/booking'
 import { serviceLabel } from '@/lib/constants/services'
@@ -49,6 +49,43 @@ function weekdayShort(iso: string): string {
 function dayNumber(iso: string): number {
   return Number(iso.split('-')[2])
 }
+
+// ── Utilidades del mes (trabajan con claves 'YYYY-MM') ──
+function monthOf(iso: string): string {
+  return iso.slice(0, 7)
+}
+function daysInMonth(ym: string): number {
+  const [y, m] = ym.split('-').map(Number)
+  return new Date(y, m, 0).getDate()
+}
+function shiftMonth(ym: string, n: number): string {
+  const [y, m] = ym.split('-').map(Number)
+  const dt = new Date(y, m - 1 + n, 1)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`
+}
+function monthLabel(ym: string): string {
+  const [y, m] = ym.split('-').map(Number)
+  const s = new Date(y, m - 1, 1).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' })
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+/**
+ * Celdas de la grilla del mes, empezando en lunes. Los huecos antes del día 1
+ * van como null para que cada fecha caiga bajo su día de la semana.
+ */
+function monthCells(ym: string): (string | null)[] {
+  const [y, m] = ym.split('-').map(Number)
+  // getDay(): 0 = domingo. Se corre para que lunes sea 0.
+  const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7
+  const total = daysInMonth(ym)
+  const cells: (string | null)[] = Array(lead).fill(null)
+  for (let d = 1; d <= total; d++) {
+    cells.push(`${ym}-${String(d).padStart(2, '0')}`)
+  }
+  while (cells.length % 7 !== 0) cells.push(null)
+  return cells
+}
+
+const WEEKDAY_HEADS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 const ACTIVE_STATUSES = new Set(['booked', 'arrived', 'completed'])
 
@@ -214,6 +251,33 @@ export default function AgendaManager({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
+  // Vista de mes completo. La página solo trae ~45 días, así que al abrir un
+  // mes fuera de ese rango se piden esas citas aparte (solo lectura).
+  const [monthView, setMonthView] = useState(false)
+  const [monthCursor, setMonthCursor] = useState(() => monthOf(today))
+  const [monthAppts, setMonthAppts] = useState<Appointment[]>([])
+  const [loadingMonth, setLoadingMonth] = useState(false)
+
+  useEffect(() => {
+    if (!monthView) return
+    let alive = true
+
+    async function loadMonth() {
+      setLoadingMonth(true)
+      const from = `${monthCursor}-01`
+      const to = `${monthCursor}-${String(daysInMonth(monthCursor)).padStart(2, '0')}`
+      const rows = await listAppointmentsForRange(from, to)
+      if (!alive) return
+      setMonthAppts(rows)
+      setLoadingMonth(false)
+    }
+
+    loadMonth()
+    return () => { alive = false }
+    // initialAppointments entra a propósito: si una acción refresca la página,
+    // el mes se vuelve a pedir y no queda mostrando datos viejos.
+  }, [monthView, monthCursor, initialAppointments])
+
   // Mapa id -> {nombre, color}
   const staffMap = useMemo(() => {
     const m = new Map<string, StaffInfo>()
@@ -221,16 +285,22 @@ export default function AgendaManager({
     return m
   }, [staff])
 
-  // Agrupa las citas por fecha
+  // Agrupa las citas por fecha. Se juntan las de la página con las del mes
+  // abierto, deduplicando por id: las de la página mandan porque son las más
+  // frescas después de una acción.
   const byDate = useMemo(() => {
+    const unique = new Map<string, Appointment>()
+    for (const a of monthAppts) unique.set(a.id, a)
+    for (const a of initialAppointments) unique.set(a.id, a)
+
     const m = new Map<string, Appointment[]>()
-    for (const a of initialAppointments) {
+    for (const a of unique.values()) {
       const arr = m.get(a.appointment_date) ?? []
       arr.push(a)
       m.set(a.appointment_date, arr)
     }
     return m
-  }, [initialAppointments])
+  }, [initialAppointments, monthAppts])
 
   const blockedSet = useMemo(() => new Set(initialBlockedDates.map((b) => b.blocked_date)), [initialBlockedDates])
 
@@ -291,7 +361,93 @@ export default function AgendaManager({
         </div>
       )}
 
+      {/* Cambio entre la tira de días y el mes completo */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <button
+          onClick={() => {
+            const next = !monthView
+            setMonthView(next)
+            // Al abrir el mes, partir en el del día que se está mirando.
+            if (next) setMonthCursor(monthOf(selectedDate))
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card text-sm font-bold hover:border-primary/50 transition-all"
+        >
+          {monthView ? <><List className="size-4" /> Ver por días</> : <><CalendarRange className="size-4" /> Ver mes completo</>}
+        </button>
+        {monthView && loadingMonth && (
+          <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Cargando el mes…
+          </span>
+        )}
+      </div>
+
+      {/* Mes completo */}
+      {monthView && (
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => setMonthCursor(shiftMonth(monthCursor, -1))}
+              className="size-9 rounded-lg border border-border flex items-center justify-center hover:border-primary/50 transition-all"
+              aria-label="Mes anterior"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <p className="text-lg font-black tracking-tight">{monthLabel(monthCursor)}</p>
+            <button
+              onClick={() => setMonthCursor(shiftMonth(monthCursor, 1))}
+              className="size-9 rounded-lg border border-border flex items-center justify-center hover:border-primary/50 transition-all"
+              aria-label="Mes siguiente"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5 mb-1.5">
+            {WEEKDAY_HEADS.map((d) => (
+              <p key={d} className="text-center text-[11px] font-bold uppercase tracking-wide text-muted-foreground">{d}</p>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5">
+            {monthCells(monthCursor).map((iso, i) => {
+              if (!iso) return <div key={`empty-${i}`} />
+              const isSel = iso === selectedDate
+              const isToday = iso === today
+              const isBlocked = blockedSet.has(iso)
+              const count = activeCountFor(iso)
+              return (
+                <button
+                  key={iso}
+                  onClick={() => setSelectedDate(iso)}
+                  className={`aspect-square rounded-xl border p-1 flex flex-col items-center justify-center gap-0.5 transition-all ${
+                    isSel
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : isToday
+                        ? 'border-primary/60 bg-primary/5 hover:border-primary'
+                        : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <span className="text-base font-black leading-none">{dayNumber(iso)}</span>
+                  {isBlocked ? (
+                    <span className={`text-[9px] font-bold ${isSel ? 'text-primary-foreground/80' : 'text-destructive'}`}>bloq.</span>
+                  ) : count > 0 ? (
+                    <span className={`inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-bold ${isSel ? 'bg-primary-foreground text-primary' : 'bg-primary/15 text-primary'}`}>{count}</span>
+                  ) : (
+                    <span className="h-4" />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-4 text-center">
+            El número en cada día son las citas activas. Toca un día para ver el detalle abajo.
+          </p>
+        </div>
+      )}
+
       {/* Tira de días tipo calendario */}
+      {!monthView && (
       <div className="flex items-center gap-2">
         <button
           onClick={() => setSelectedDate(addDays(selectedDate, -1))}
@@ -340,6 +496,7 @@ export default function AgendaManager({
           className="w-auto shrink-0 hidden sm:block"
         />
       </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Citas del día seleccionado */}
