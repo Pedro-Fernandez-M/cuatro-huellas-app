@@ -103,7 +103,7 @@ function RescheduleForm({ appt, onDone }: { appt: Appointment; onDone: () => voi
     setDate(d)
     setTime(null)
     setLoading(true)
-    const available = await getAvailableSlotsAction(d, appt.size_category, appt.staff_id)
+    const available = await getAvailableSlotsAction(d, appt.size_category, appt.staff_id, false)
     setSlots(available)
     setLoading(false)
   }

@@ -12,9 +12,10 @@ export async function getAvailableSlotsAction(
   date: string,
   size: BookingInput['sizeCategory'],
   staffId?: string | null,
+  enforceLeadTime = true,
 ) {
   try {
-    return await getAvailableSlots(date, size, staffId)
+    return await getAvailableSlots(date, size, staffId, enforceLeadTime)
   } catch {
     return []
   }

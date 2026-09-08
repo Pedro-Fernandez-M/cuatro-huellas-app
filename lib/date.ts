@@ -5,6 +5,13 @@ export function todayInShopTz(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: SHOP_TIMEZONE }).format(new Date())
 }
 
+/** Hora actual en la zona horaria del local, formato 'HH:MM' (24h). */
+export function nowTimeInShopTz(): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: SHOP_TIMEZONE, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).format(new Date())
+}
+
 export function formatDateLong(dateStr: string): string {
   const [y, m, d] = dateStr.split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })

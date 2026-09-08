@@ -1,20 +1,41 @@
 import Link from 'next/link'
 import { CalendarDays, UserPlus, PawPrint } from 'lucide-react'
-import { listAppointmentsForDate, countInShopNow } from '@/actions/appointments'
+import { listAppointmentsForDate, listAppointmentsForRange, countInShopNow } from '@/actions/appointments'
+import { listBlockedDates } from '@/actions/agenda'
+import { getCurrentStaff, getActiveStaff } from '@/actions/staff'
 import { todayInShopTz, formatDateLong } from '@/lib/date'
+import { workDatesThisWeek, computeFreeHours } from '@/lib/scheduling/freeHours'
 import TodayAppointments from '@/components/admin/TodayAppointments'
+import { FreeHoursPanel, type FreeHoursItem } from '@/components/admin/FreeHoursPanel'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminHomePage() {
   const today = todayInShopTz()
-  const [appointments, inShopNow] = await Promise.all([
+  const weekDates = workDatesThisWeek(today)
+  const weekEnd = weekDates[weekDates.length - 1] ?? today
+
+  const [appointments, inShopNow, current, allStaff, weekAppts, blocked] = await Promise.all([
     listAppointmentsForDate(today),
     countInShopNow(),
+    getCurrentStaff(),
+    getActiveStaff(),
+    listAppointmentsForRange(today, weekEnd),
+    listBlockedDates(),
   ])
 
   const bookedCount = appointments.filter((a) => a.status === 'booked').length
   const completedCount = appointments.filter((a) => a.status === 'completed').length
+
+  // Horas disponibles: la asistente ve solo las suyas; la admin ve todo el equipo.
+  const blockedSet = new Set(blocked.map((b) => b.blocked_date))
+  const relevantStaff = current?.role === 'assistant'
+    ? allStaff.filter((s) => s.id === current.id)
+    : allStaff
+  const freeHours: FreeHoursItem[] = relevantStaff.map((s) => {
+    const { today: t, week: w } = computeFreeHours(weekAppts, s.id, weekDates, blockedSet)
+    return { id: s.id, name: s.name, photoUrl: s.photo_url, today: t, week: w }
+  })
 
   return (
     <div>
@@ -32,6 +53,8 @@ export default async function AdminHomePage() {
           </Link>
         </div>
       </div>
+
+      {freeHours.length > 0 && <FreeHoursPanel items={freeHours} />}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         {[
