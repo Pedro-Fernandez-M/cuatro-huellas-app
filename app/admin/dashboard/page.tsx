@@ -1,41 +1,44 @@
 import Link from 'next/link'
 import { CalendarDays, UserPlus, PawPrint } from 'lucide-react'
-import { listAppointmentsForDate, listAppointmentsForRange, countInShopNow } from '@/actions/appointments'
-import { listBlockedDates } from '@/actions/agenda'
+import { listAppointmentsForDate, countInShopNow } from '@/actions/appointments'
 import { getCurrentStaff, getActiveStaff } from '@/actions/staff'
 import { todayInShopTz, formatDateLong } from '@/lib/date'
-import { workDatesThisWeek, computeFreeHours } from '@/lib/scheduling/freeHours'
+import { workDatesThisWeek } from '@/lib/scheduling/weekDates'
+import { getAvailableSlots } from '@/lib/scheduling/availability'
 import TodayAppointments from '@/components/admin/TodayAppointments'
-import { FreeHoursPanel, type FreeHoursItem } from '@/components/admin/FreeHoursPanel'
+import { BookableSlotsPanel, type StaffBookable } from '@/components/admin/BookableSlotsPanel'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminHomePage() {
   const today = todayInShopTz()
   const weekDates = workDatesThisWeek(today)
-  const weekEnd = weekDates[weekDates.length - 1] ?? today
 
-  const [appointments, inShopNow, current, allStaff, weekAppts, blocked] = await Promise.all([
+  const [appointments, inShopNow, current, allStaff] = await Promise.all([
     listAppointmentsForDate(today),
     countInShopNow(),
     getCurrentStaff(),
     getActiveStaff(),
-    listAppointmentsForRange(today, weekEnd),
-    listBlockedDates(),
   ])
 
   const bookedCount = appointments.filter((a) => a.status === 'booked').length
   const completedCount = appointments.filter((a) => a.status === 'completed').length
 
-  // Horas disponibles: la asistente ve solo las suyas; la admin ve todo el equipo.
-  const blockedSet = new Set(blocked.map((b) => b.blocked_date))
+  // Horas reservables por clientes: la asistente ve solo las suyas; la admin, todo el equipo.
+  // Usa la MISMA disponibilidad que ve el cliente (incluye el corte de 1 hora).
   const relevantStaff = current?.role === 'assistant'
     ? allStaff.filter((s) => s.id === current.id)
     : allStaff
-  const freeHours: FreeHoursItem[] = relevantStaff.map((s) => {
-    const { today: t, week: w } = computeFreeHours(weekAppts, s.id, weekDates, blockedSet)
-    return { id: s.id, name: s.name, photoUrl: s.photo_url, today: t, week: w }
-  })
+  const bookable: StaffBookable[] = await Promise.all(
+    relevantStaff.map(async (s) => ({
+      id: s.id,
+      name: s.name,
+      photoUrl: s.photo_url,
+      days: await Promise.all(
+        weekDates.map(async (iso) => ({ iso, slots: await getAvailableSlots(iso, 'pequena', s.id, true) })),
+      ),
+    })),
+  )
 
   return (
     <div>
@@ -54,7 +57,7 @@ export default async function AdminHomePage() {
         </div>
       </div>
 
-      {freeHours.length > 0 && <FreeHoursPanel items={freeHours} />}
+      {bookable.length > 0 && <BookableSlotsPanel items={bookable} />}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         {[
