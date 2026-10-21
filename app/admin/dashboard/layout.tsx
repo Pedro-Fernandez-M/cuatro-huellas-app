@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import {
   LayoutDashboard, CalendarDays, UserPlus,
-  Users, TrendingUp, TrendingDown, Package, LogOut, History, Calculator, Scissors, KeyRound, BarChart3, Bell, BellRing, Megaphone, UsersRound,
+  Users, TrendingUp, TrendingDown, Package, LogOut, History, Calculator, Scissors, KeyRound, BarChart3, Bell, BellRing, Megaphone, UsersRound, DatabaseBackup,
 } from 'lucide-react'
 import { Logo } from '@/components/Logo'
 import { signOut } from '@/actions/auth'
@@ -24,6 +24,7 @@ const NAV: NavItem[] = [
   { href: '/admin/dashboard/servicios', label: 'Servicios', icon: Scissors, adminOnly: true },
   { href: '/admin/dashboard/ofertas', label: 'Ofertas', icon: Megaphone, adminOnly: true },
   { href: '/admin/dashboard/equipo', label: 'Equipo', icon: UsersRound, adminOnly: true },
+  { href: '/admin/dashboard/respaldos', label: 'Respaldos', icon: DatabaseBackup, adminOnly: true },
   { href: '/admin/dashboard/notificaciones', label: 'Notificaciones', icon: BellRing },
   { href: '/admin/dashboard/cuenta', label: 'Mi cuenta', icon: KeyRound },
 ]
