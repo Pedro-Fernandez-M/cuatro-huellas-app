@@ -26,8 +26,8 @@ export default async function RespaldosPage() {
       <div className="p-5 rounded-2xl border border-border bg-secondary/40 space-y-3 text-sm">
         <p className="flex items-center gap-2 font-semibold"><Mail className="size-4 text-primary" /> Respaldo automático por correo</p>
         <p className="text-muted-foreground">
-          Todos los días se genera un respaldo y, si está configurado el correo, se envía solo. Esa misma
-          rutina diaria mantiene la base de datos activa para que nunca se pause por inactividad.
+          Cada día una rutina toca la base de datos para que nunca se pause por inactividad, y
+          <strong> una vez por semana (los lunes)</strong> te llega el respaldo por correo.
         </p>
         <p className="flex items-center gap-2 text-muted-foreground">
           <ShieldCheck className="size-4 text-primary shrink-0" /> El archivo contiene datos de clientes: guárdalo en un lugar seguro.
